@@ -7,8 +7,10 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoATF.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoLTF.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/CombinationFactory.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PairCombinationFactory.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/GhostBuster.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/DuplicateRemoval.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ParameterDuplicateRemoval.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/MCTruthAssociator.h"
 using namespace slhcl1tt;
 
@@ -65,6 +67,9 @@ class TrackFitter {
 
     // Combination factory
     CombinationFactory combinationFactory_;
+    
+    // pair combination factory
+    PairCombinationFactory pairCombinationFactory_;
 
     // Ghost buster
     GhostBuster ghostBuster_;

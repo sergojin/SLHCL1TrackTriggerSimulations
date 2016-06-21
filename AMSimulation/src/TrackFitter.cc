@@ -97,12 +97,22 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
             // Get combinations of stubRefs
             std::vector<std::vector<unsigned> > stubRefs = reader.vr_stubRefs->at(iroad);
+	    std::vector<std::vector<float> > stubDeltaS; //pass DeltaS information for each stub to the PDDS
             for (unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer) {
-                if (stubRefs.at(ilayer).size() > (unsigned) po_.maxStubs)
+	        std::vector<float> placeholderTemp;
+	        stubDeltaS.push_back(placeholderTemp);
+		if(po_.PDDS) for(unsigned istub=0; istub<stubRefs[ilayer].size(); ++istub) stubDeltaS[ilayer].push_back(reader.vb_trigBend->at(stubRefs[ilayer][istub]));
+		else for(unsigned istub=0; istub<stubRefs[ilayer].size(); ++istub) stubDeltaS[ilayer].push_back(0.); //default DDS is 0 to disable PDDS cleaning
+                if (stubRefs.at(ilayer).size() > (unsigned) po_.maxStubs){
                     stubRefs.at(ilayer).resize(po_.maxStubs);
+		    stubDeltaS.at(ilayer).resize(po_.maxStubs);
+		}
             }
-
-            const std::vector<std::vector<unsigned> >& combinations = combinationFactory_.combine(stubRefs);
+	    
+	    //choose either the normal combination building or the 5/6 permutations per 6/6 road in addition and/or pairwise Delta Delta S cleaning (PDDS)
+	    std::vector<std::vector<unsigned> > combinations;
+            if(po_.FiveOfSix || po_.PDDS)	combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix);
+	    else 				combinations = combinationFactory_.combine(stubRefs);			
 
             for (unsigned icomb=0; icomb<combinations.size(); ++icomb)
                 assert(combinations.at(icomb).size() == reader.vr_stubRefs->at(iroad).size());
@@ -209,6 +219,13 @@ int TrackFitter::makeTracks(TString src, TString out) {
 	// ---------------------------------------------------------------------
 	DuplicateRemoval flagDuplicates;
 	flagDuplicates.CheckTracks(tracks, po_.rmDuplicate);
+
+	//----------------------------------------------------------------------
+	// Identify and flag duplicates by defining a track-parameter space 
+	// inside of which anything is considered to be a single track
+	//----------------------------------------------------------------------
+	ParameterDuplicateRemoval RemoveParameterDuplicates;
+	if(po_.rmParDuplicate) RemoveParameterDuplicates.ReduceTracks(tracks);
 
 
 

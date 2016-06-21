@@ -113,6 +113,13 @@ int main(int argc, char **argv) {
 
 	// Only for Duplicate Flag
         ("rmDuplicate", po::value<int>(&option.rmDuplicate)->default_value(-1), "Duplicate removal option. The argument is the number of max stubs allowed to be shared between AM tracks")
+
+	// Only for parameter-based duplicate removal
+	("rmParDuplicate", po::bool_switch(&option.rmParDuplicate)->default_value(false), "Parameter-based duplicate removal switch")
+
+	//Only for alternative combination builder configuration
+	("FiveOfSix", po::bool_switch(&option.FiveOfSix)->default_value(false), "Do all 5/6 permutations of 6/6 roads in addition")
+	("PDDS", po::bool_switch(&option.PDDS)->default_value(false), "Switch on pairwise Delta Delta S combination cleaning")
 	
         // Only for NTupleMaker
         ("no-trim"      , po::bool_switch(&option.no_trim)->default_value(false), "Do not trim ntuple branches")

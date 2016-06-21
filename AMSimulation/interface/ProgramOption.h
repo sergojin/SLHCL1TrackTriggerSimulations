@@ -54,6 +54,10 @@ struct ProgramOption {
     int         maxTracks;
 
     int 	rmDuplicate;
+    bool        rmParDuplicate;
+
+    bool	FiveOfSix;
+    bool	PDDS;
 
     bool        no_trim;
     bool        removeOverlap;
