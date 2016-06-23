@@ -2,10 +2,23 @@
 
 from rootdrawing import *
 from parser import *
+from ROOT import *
 
 col = TColor.GetColor("#BA0000")
 fcol = TColor.GetColor("#E58080")
 col_res = TColor.GetColor("#008000")
+
+#________ Tklayout cuts ________
+r_star = 58.9
+mPtFactor = 0.3*3.8*0.5*0.01
+phi_i = TMath.Pi()/4.
+phi_f = TMath.Pi()/2.
+eta_i = 0.
+eta_f = 0.733333
+z0_min = 7.
+
+def phi_star(phi_0, qbpT):
+    return phi_0 - TMath.ASin(mPtFactor*r_star*qbpT)
 
 
 # ______________________________________________________________________________
@@ -128,6 +141,7 @@ def drawer_project(tree, histos, options):
     tree.SetBranchStatus("AMTTTracks_chi2"      , 1)
     tree.SetBranchStatus("AMTTTracks_ndof"      , 1)
     tree.SetBranchStatus("AMTTTracks_synTpId"   , 1)
+    tree.SetBranchStatus("AMTTTracks_tpId"      , 1)
     tree.SetBranchStatus("AMTTTracks_patternRef", 1)
     tree.SetBranchStatus("AMTTTracks_stubRefs"  , 1)
 
@@ -166,6 +180,17 @@ def drawer_project(tree, histos, options):
             vz      = evt.trkParts_vz     [ipart]
             pdgId   = evt.trkParts_pdgId  [ipart]
 
+
+            #_______ Tklayout cuts ________
+            q_over_Pt = charge/pt
+            if phi_star(phi, q_over_Pt) < phi_i or phi_star(phi, q_over_Pt) > phi_f:
+               continue
+            if eta < eta_i or eta > eta_f:
+               continue
+            if fabs(vz) > z0_min:
+               continue
+
+
             trkparts[ipart] = (pt, eta, phi, vz, charge, pdgId)
             if options.verbose:  print ievt, "part ", ipart, trkparts[ipart]
 
@@ -178,8 +203,8 @@ def drawer_project(tree, histos, options):
             trigger = False
 
             synTpId  = evt.AMTTTracks_synTpId[itrack]
-            if synTpId >= 0:
-                trigger = True
+            if synTpId == 1:
+                trigger = True	   
 
             patternRef = evt.AMTTTracks_patternRef[itrack]
             if not (patternRef < options.npatterns):
@@ -196,10 +221,11 @@ def drawer_project(tree, histos, options):
             track_eta  = evt.AMTTTracks_eta     [itrack]
 
             if trigger:
-                trkparts_trigger[synTpId] = True
-                trkparts_trigger_vars[synTpId] = (track_pt, track_eta)
+                tpId = evt.AMTTTracks_tpId[itrack]	        
+                trkparts_trigger[tpId] = True
+                trkparts_trigger_vars[tpId] = (track_pt, track_eta)
 
-                if options.verbose and (synTpId in trkparts):  print ievt, "track", itrack, track_pt, track_eta, repr_cppvector(evt.AMTTTracks_stubRefs[itrack])
+                if options.verbose and (tpId in trkparts):  print ievt, "track", itrack, track_pt, track_eta, repr_cppvector(evt.AMTTTracks_stubRefs[itrack])
 
         #for k, v in trkparts_trigger.iteritems():
         #    assert k in trkparts
