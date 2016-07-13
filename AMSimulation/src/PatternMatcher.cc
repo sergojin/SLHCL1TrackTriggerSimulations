@@ -105,6 +105,9 @@ int PatternMatcher::makeRoads(TString src, TString out) {
     std::vector<TTRoad> roads;
     roads.reserve(300);
 
+    std::vector<std::string> stubs_bitString;
+    std::vector<unsigned>    stubs_superstripId;
+
     // Bookkeepers
     long int nRead = 0, nKept = 0;
 
@@ -199,13 +202,23 @@ int PatternMatcher::makeRoads(TString src, TString out) {
         // Start pattern recognition
         hitBuffer_.reset();
 
+        stubs_bitString.clear();
+        stubs_superstripId.clear();
+
         // Loop over reconstructed stubs
         for (unsigned istub=0; istub<nstubs; ++istub) {
             bool isNotInTower = stubsNotInTower.at(istub);
-            if (isNotInTower)
+            if (isNotInTower) {
+                stubs_bitString.push_back("");
+                stubs_superstripId.push_back(0);
                 continue;
-            if ((removeOverlap_) && stubsInOverlapping.at(istub))
+            }
+
+            if ((removeOverlap_) && stubsInOverlapping.at(istub)) {
+                stubs_bitString.push_back("");
+                stubs_superstripId.push_back(0);
                 continue;
+            }
 
             unsigned moduleId = reader.vb_modId   ->at(istub);
             float    strip    = reader.vb_coordx  ->at(istub);  // in full-strip unit
@@ -234,6 +247,10 @@ int PatternMatcher::makeRoads(TString src, TString out) {
                 std::cout << Debug() << "... ... stub: " << istub << " moduleId: " << moduleId << " strip: " << strip << " segment: " << segment << " r: " << stub_r << " phi: " << stub_phi << " z: " << stub_z << " ds: " << stub_ds << std::endl;
                 std::cout << Debug() << "... ... stub: " << istub << " ssId: " << ssId << std::endl;
             }
+
+            std::string bitString = "";
+            stubs_bitString.push_back(bitString);
+            stubs_superstripId.push_back(ssId);
         }
 
         hitBuffer_.freeze(po_.maxStubs);
@@ -292,7 +309,10 @@ int PatternMatcher::makeRoads(TString src, TString out) {
         if (! roads.empty())
             ++nKept;
 
-        writer.fill(roads);
+        assert(reader.vb_modId->size() == stubs_bitString.size());
+        assert(reader.vb_modId->size() == stubs_superstripId.size());
+
+        writer.fill(roads, stubs_bitString, stubs_superstripId);
         ++nRead;
     }
 
