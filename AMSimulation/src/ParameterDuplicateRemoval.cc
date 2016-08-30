@@ -7,18 +7,18 @@ void ParameterDuplicateRemoval::ReduceTracks(std::vector<TTTrack2>& Tracks){
     if(Clouds.size()==0){ //start a new cloud, if there isn't any, yet
       TrackCloud element;
       Clouds.push_back(element);
-      Clouds[0].Add(t,Tracks.at(t).stubRefs(),Tracks.at(t).chi2()/Tracks.at(t).ndof(),Tracks.at(t).eta(),Tracks.at(t).phi0());
+      Clouds[0].Add(t,Tracks.at(t).chi2()/Tracks.at(t).ndof(),Tracks.at(t).eta(),Tracks.at(t).phi0(),Tracks.at(t).pt(),Tracks.at(t).invPt()); //test
     }
     else{
       bool FoundCloud=false;
       for(unsigned c=0; c<Clouds.size(); ++c){
-	FoundCloud=Clouds[c].Add(t,Tracks.at(t).stubRefs(),Tracks.at(t).chi2()/Tracks.at(t).ndof(),Tracks.at(t).eta(),Tracks.at(t).phi0());
+	FoundCloud=Clouds[c].Add(t,Tracks.at(t).chi2()/Tracks.at(t).ndof(),Tracks.at(t).eta(),Tracks.at(t).phi0(),Tracks.at(t).pt(),Tracks.at(t).invPt()); //test
 	if(FoundCloud) break;
       }//end cloud loop
       if(!FoundCloud){
 	TrackCloud element;
 	Clouds.push_back(element);
-	Clouds[Clouds.size()-1].Add(t,Tracks.at(t).stubRefs(),Tracks.at(t).chi2()/Tracks.at(t).ndof(),Tracks.at(t).eta(),Tracks.at(t).phi0());
+	Clouds[Clouds.size()-1].Add(t,Tracks.at(t).chi2()/Tracks.at(t).ndof(),Tracks.at(t).eta(),Tracks.at(t).phi0(),Tracks.at(t).pt(),Tracks.at(t).invPt()); //test
       }
     }
   }//end track loop

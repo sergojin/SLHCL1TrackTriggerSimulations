@@ -48,18 +48,20 @@ struct ProgramOption {
     std::string view;
     unsigned    hitBits;
 
+    bool	removeClones;
     float       maxChi2;
     bool	CutPrincipals;
     int         minNdof;
     int         maxCombs;
     int         maxTracks;
+    float       maxDeltaSChi2;
 
     int 	rmDuplicate;
     bool        rmParDuplicate;
 
     bool        oldCB;
     bool	FiveOfSix;
-    bool	PDDS;
+    int 	PDDS;
 
     bool        no_trim;
     bool        removeOverlap;
