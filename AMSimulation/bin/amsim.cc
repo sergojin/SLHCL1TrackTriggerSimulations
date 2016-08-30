@@ -111,6 +111,7 @@ int main(int argc, char **argv) {
         ("minNdof"      , po::value<int>(&option.minNdof)->default_value(1), "Specify minimum degree of freedom")
         ("maxCombs"     , po::value<int>(&option.maxCombs)->default_value(999999999), "Specfiy max number of combinations per road")
         ("maxTracks"    , po::value<int>(&option.maxTracks)->default_value(999999999), "Specfiy max number of tracks per event")
+        ("maxDeltaSChi2"      , po::value<float>(&option.maxDeltaSChi2)->default_value(999999999), "Specify maximum reduced DeltaS chi-squared")
 
 	// Only for Duplicate Flag
         ("rmDuplicate", po::value<int>(&option.rmDuplicate)->default_value(-1), "Duplicate removal option. The argument is the number of max stubs allowed to be shared between AM tracks")
@@ -120,7 +121,7 @@ int main(int argc, char **argv) {
 
 	//Only for alternative combination builder configuration
 	("FiveOfSix", po::bool_switch(&option.FiveOfSix)->default_value(false), "Do all 5/6 permutations of 6/6 roads in addition")
-	("PDDS", po::bool_switch(&option.PDDS)->default_value(false), "Switch on pairwise Delta Delta S combination cleaning")
+	("PDDS", po::value<int>(&option.PDDS)->default_value(0), "Switch on pairwise Delta Delta S combination cleaning, 5 for 5-scheme, 3 for 3-scheme")
 	
         // Only for NTupleMaker
         ("no-trim"      , po::bool_switch(&option.no_trim)->default_value(false), "Do not trim ntuple branches")

@@ -60,6 +60,7 @@ std::ostream& operator<<(std::ostream& o, const ProgramOption& po) {
       << "  minNdof: "      << po.minNdof
       << "  maxCombs: "     << po.maxCombs
       << "  maxTracks: "    << po.maxTracks
+      << "  maxDeltaSChi2: "<< po.maxDeltaSChi2
 
       << "  no_trim: "      << po.no_trim
       << "  removeOverlap: "<< po.removeOverlap

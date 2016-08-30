@@ -27,7 +27,7 @@ std::vector<PairAssignment> PairCombinationFactory::Stage1Pair(std::vector<std::
 }
 
 //combination(stubAddresses,pass)
-std::vector<std::vector<unsigned> > PairCombinationFactory::CombinationBuilder(std::vector<PairAssignment> Layer10, std::vector<PairAssignment> Layer12, std::vector<PairAssignment> Layer32, std::vector<PairAssignment> Layer34, std::vector<PairAssignment> Layer54, unsigned l0, unsigned l2, unsigned l4)
+std::vector<std::vector<unsigned> > PairCombinationFactory::CombinationBuilder(std::vector<PairAssignment> Layer10, std::vector<PairAssignment> Layer12, std::vector<PairAssignment> Layer32, std::vector<PairAssignment> Layer34, std::vector<PairAssignment> Layer54, unsigned l0, unsigned l2, unsigned l4, int scheme)
 {
   //initialize return object
   std::vector<std::vector<unsigned> >  Combinations;
@@ -35,11 +35,13 @@ std::vector<std::vector<unsigned> > PairCombinationFactory::CombinationBuilder(s
   for(unsigned i=0; i<Layer10.size(); ++i){
     for(unsigned j=0; j<Layer32.size(); ++j){
       for(unsigned k=0; k<Layer54.size(); ++k){
-	if(!(Layer10[i].SurvivingPair * Layer32[j].SurvivingPair * Layer54[k].SurvivingPair)) continue; //3-logic part
+	if((scheme==3 || scheme==5) && !(Layer10[i].SurvivingPair * Layer32[j].SurvivingPair * Layer54[k].SurvivingPair)) continue; //3-logic part
 	//5-logic stub position lookup
-	int pos12=i/l0*l2+j%l2;
-	int pos34=j/l2*l4+k%l4;
-	if(!(Layer12[pos12].SurvivingPair * Layer34[pos34].SurvivingPair)) continue; //5-logic extension
+	if(scheme==5){
+	  int pos12=i/l0*l2+j%l2;
+	  int pos34=j/l2*l4+k%l4;
+	  if(!(Layer12[pos12].SurvivingPair * Layer34[pos34].SurvivingPair)) continue; //5-logic extension
+	}
 	std::vector<unsigned> layers={Layer10[i].Stub2Address, Layer10[i].Stub1Address, Layer32[j].Stub2Address, Layer32[j].Stub1Address, Layer54[k].Stub2Address, Layer54[k].Stub1Address};
 
 	//catch >1 dummy cases, always put dummy in the first position per layer!
@@ -55,7 +57,7 @@ std::vector<std::vector<unsigned> > PairCombinationFactory::CombinationBuilder(s
   return Combinations;
 }
 
-std::vector<std::vector<unsigned> > PairCombinationFactory::combine(const std::vector<std::vector<unsigned> >& groups, std::vector<std::vector<float> > DeltaS, bool FiveOfSix) {
+std::vector<std::vector<unsigned> > PairCombinationFactory::combine(const std::vector<std::vector<unsigned> >& groups, std::vector<std::vector<float> > DeltaS, bool FiveOfSix, int scheme) {
         std::vector<std::vector<unsigned> > combinations;
         std::vector<std::vector<unsigned> > CombinationBase=groups;
 
@@ -89,7 +91,7 @@ std::vector<std::vector<unsigned> > PairCombinationFactory::combine(const std::v
 	std::vector<PairAssignment> Layer45=Stage1Pair(Layer[5],Layer[4],2.0);
 
 	//build the actual combinations
-	combinations = CombinationBuilder(Layer01,Layer12,Layer23,Layer34,Layer45,CombinationBase[0].size(),CombinationBase[2].size(),CombinationBase[4].size());
+	combinations = CombinationBuilder(Layer01,Layer12,Layer23,Layer34,Layer45,CombinationBase[0].size(),CombinationBase[2].size(),CombinationBase[4].size(), scheme);
 	//for(unsigned c=0; c<combinations.size(); ++c) std::cout<<combinations[c][0]<<","<<combinations[c][1]<<","<<combinations[c][2]<<","<<combinations[c][3]<<","<<combinations[c][4]<<","<<combinations[c][5]<<std::endl;  //combination verbose
         return combinations;
 }

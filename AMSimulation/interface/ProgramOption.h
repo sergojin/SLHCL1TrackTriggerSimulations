@@ -53,12 +53,13 @@ struct ProgramOption {
     int         minNdof;
     int         maxCombs;
     int         maxTracks;
+    float       maxDeltaSChi2;
 
     int 	rmDuplicate;
     bool        rmParDuplicate;
 
     bool	FiveOfSix;
-    bool	PDDS;
+    int 	PDDS;
 
     bool        no_trim;
     bool        removeOverlap;

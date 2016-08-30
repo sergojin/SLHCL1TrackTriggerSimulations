@@ -54,6 +54,34 @@ bool PrincipalCuts(std::vector<float> princes){
   }
   return pass;
 }
+
+  struct TrackStubConsistency{
+    TFile *input;
+    std::vector<TH1F*> extrapolators;
+    void init(){
+      input=new TFile("DeltaSbands_AllExtrapolated_AllWidthsAverage.root","READ");
+      for(unsigned i=0; i<6; ++i) extrapolators.push_back((TH1F*)input->Get(TString::Format("Extrapolator%d",i)));   
+    }
+    float DeltaSchi2(std::vector<std::vector<float> > DeltaS_, float CpT_){
+      std::vector<float> chi2;
+      float ndof=0;
+      float Chi2_DeltaS=0;
+      float cuts[6]={12.75,14.75,15.85,11.55,13.45,15.84};
+      for(unsigned i=0; i<DeltaS_.size(); ++i) for(unsigned j=0; j<DeltaS_[i].size(); ++j){
+      	++ndof;
+      	const int pos=extrapolators[i]->FindBin(DeltaS_[i][j]);
+	const float result=pow((CpT_-extrapolators[i]->GetBinContent(pos))/extrapolators[i]->GetBinError(pos),2);
+      	if(result<cuts[i]) Chi2_DeltaS+=result;
+	else Chi2_DeltaS+=999;
+      }
+      return Chi2_DeltaS/ndof;
+    }
+    void cleanup(){
+      extrapolators.clear();
+      input->Close();
+    }
+  };
+
 }
 
 
@@ -79,6 +107,10 @@ int TrackFitter::makeTracks(TString src, TString out) {
         return 1;
     }
 
+    //test consistency of stubs within track to track fit pT
+    TrackStubConsistency StubTest;
+    StubTest.init();
+
     // _________________________________________________________________________
     // Loop over all events
 
@@ -88,6 +120,9 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
     // Bookkeepers
     long int nRead = 0, nKept = 0;
+
+    //input histogram file
+
 
     for (long long ievt=0; ievt<nEvents_; ++ievt) {
         if (reader.loadTree(ievt) < 0)  break;
@@ -119,6 +154,29 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
             // Get combinations of stubRefs
             std::vector<std::vector<unsigned> > stubRefs = reader.vr_stubRefs->at(iroad);
+	    //clean duplicate stubs
+	   /*for(unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer){
+	      std::vector<bool> Remove;
+	      for(unsigned stubs=0; stubs<stubRefs[ilayer].size(); ++stubs) Remove.push_back(false);
+	      for(int stub=0; stub<(int)stubRefs[ilayer].size()-1; ++stub) for(unsigned j=stub+1; j<stubRefs[ilayer].size(); ++j){
+		const unsigned stub1=stubRefs[ilayer][stub];
+		const unsigned stub2=stubRefs[ilayer][j];
+		if(reader.vb_r->at(stub1)==reader.vb_r->at(stub2) && reader.vb_phi->at(stub1)==reader.vb_phi->at(stub2) && reader.vb_z->at(stub1)==reader.vb_z->at(stub2)){
+		  if(reader.vb_tpId->at(stub1) <0) Remove[stub]=true;
+		  else if(reader.vb_tpId->at(stub2) <0) Remove[j]=true;
+		  //else Remove[stub]=true;
+		}
+	      }//end adjacent stub comparison
+	      unsigned offset=0;
+	      for(unsigned i=0; i<Remove.size(); ++i){
+		if(Remove[i]){
+		  stubRefs[ilayer].erase(stubRefs[ilayer].begin()+i-offset); //accounts for previous deletions
+		  ++offset;
+		}
+	      }//end removal procedure
+	    }//end layer loop
+*/
+
 	    std::vector<std::vector<float> > stubDeltaS; //pass DeltaS information for each stub to the PDDS
             for (unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer) {
 	        std::vector<float> placeholderTemp;
@@ -133,7 +191,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
 	    
 	    //choose either the normal combination building or the 5/6 permutations per 6/6 road in addition and/or pairwise Delta Delta S cleaning (PDDS)
 	    std::vector<std::vector<unsigned> > combinations;
-            if(po_.FiveOfSix || po_.PDDS)	combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix);
+            if(po_.FiveOfSix || po_.PDDS)	combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix, po_.PDDS);
 	    else 				combinations = combinationFactory_.combine(stubRefs);			
 
             for (unsigned icomb=0; icomb<combinations.size(); ++icomb)
@@ -160,6 +218,8 @@ int TrackFitter::makeTracks(TString src, TString out) {
                 acomb.stubs_z   .clear();
                 acomb.stubs_bool.clear();
 
+		std::vector<std::vector<float> > DeltaSvector;
+
                 for (unsigned istub=0; istub<acomb.stubRefs.size(); ++istub) {
                     const unsigned stubRef = acomb.stubRefs.at(istub);
                     if (stubRef != CombinationFactory::BAD) {
@@ -167,11 +227,13 @@ int TrackFitter::makeTracks(TString src, TString out) {
                         acomb.stubs_phi .push_back(reader.vb_phi ->at(stubRef));
                         acomb.stubs_z   .push_back(reader.vb_z   ->at(stubRef));
                         acomb.stubs_bool.push_back(true);
+			DeltaSvector.push_back({reader.vb_trigBend->at(stubRef)});
                     } else {
                         acomb.stubs_r   .push_back(0.);
                         acomb.stubs_phi .push_back(0.);
                         acomb.stubs_z   .push_back(0.);
                         acomb.stubs_bool.push_back(false);
+			DeltaSvector.push_back({});
                     }
                 }
 
@@ -197,16 +259,16 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
                 if(!po_.CutPrincipals){
 		  if (atrack.chi2Red() < po_.maxChi2)  // reduced chi^2 = chi^2 / ndof
-                    tracks.push_back(atrack);
+ 			tracks.push_back(atrack);
 		}
-		else if(PrincipalCuts(atrack.principals())) tracks.push_back(atrack);
+		else if(PrincipalCuts(atrack.principals())){
+		  float StubChi2=StubTest.DeltaSchi2(DeltaSvector, atrack.invPt());
+		  if(StubChi2<po_.maxDeltaSChi2) tracks.push_back(atrack);
+		}
 
                 if (verbose_>2)  std::cout << Debug() << "... ... ... track: " << icomb << " status: " << fitstatus << " reduced chi2: " << atrack.chi2Red() << " invPt: " << atrack.invPt() << " phi0: " << atrack.phi0() << " cottheta: " << atrack.cottheta() << " z0: " << atrack.z0() << std::endl;
             }
         }  // loop over the roads
-
-        std::sort(tracks.begin(), tracks.end(), sortByPt);
-
 
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # tracks: " << tracks.size() << std::endl;
         if (verbose_>3) {
@@ -252,7 +314,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
 	ParameterDuplicateRemoval RemoveParameterDuplicates;
 	if(po_.rmParDuplicate) RemoveParameterDuplicates.ReduceTracks(tracks);
 
-
+        std::sort(tracks.begin(), tracks.end(), sortByPt);
 
 
         // _____________________________________________________________________        // Track categorization
@@ -306,6 +368,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
     if (verbose_)  std::cout << Info() << Form("Read: %7ld, triggered: %7ld", nRead, nKept) << std::endl;
 
+    StubTest.cleanup();
 
     // _________________________________________________________________________
     // Write histograms
