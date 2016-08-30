@@ -55,12 +55,17 @@ std::ostream& operator<<(std::ostream& o, const ProgramOption& po) {
       << "  view: "         << po.view
       << "  hitBits: "      << po.hitBits
 
+      << " remove Clones "  << po.removeClones
       << "  maxChi2: "      << po.maxChi2
       << "  CutPrincipals: "<< po.CutPrincipals
       << "  minNdof: "      << po.minNdof
       << "  maxCombs: "     << po.maxCombs
       << "  maxTracks: "    << po.maxTracks
       << "  maxDeltaSChi2: "<< po.maxDeltaSChi2
+
+      << "  oldCB: "        << po.oldCB
+      << "  FiveOfSix: "    << po.FiveOfSix
+      << "  PDDS: "         << po.PDDS
 
       << "  no_trim: "      << po.no_trim
       << "  removeOverlap: "<< po.removeOverlap

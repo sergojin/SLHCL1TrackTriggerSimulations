@@ -48,6 +48,7 @@ struct ProgramOption {
     std::string view;
     unsigned    hitBits;
 
+    bool	removeClones;
     float       maxChi2;
     bool	CutPrincipals;
     int         minNdof;
@@ -58,6 +59,7 @@ struct ProgramOption {
     int 	rmDuplicate;
     bool        rmParDuplicate;
 
+    bool        oldCB;
     bool	FiveOfSix;
     int 	PDDS;
 

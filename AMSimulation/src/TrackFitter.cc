@@ -155,7 +155,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
             // Get combinations of stubRefs
             std::vector<std::vector<unsigned> > stubRefs = reader.vr_stubRefs->at(iroad);
 	    //clean duplicate stubs
-	   /*for(unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer){
+	    if(po_.RemoveClones) for(unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer){
 	      std::vector<bool> Remove;
 	      for(unsigned stubs=0; stubs<stubRefs[ilayer].size(); ++stubs) Remove.push_back(false);
 	      for(int stub=0; stub<(int)stubRefs[ilayer].size()-1; ++stub) for(unsigned j=stub+1; j<stubRefs[ilayer].size(); ++j){
@@ -164,7 +164,6 @@ int TrackFitter::makeTracks(TString src, TString out) {
 		if(reader.vb_r->at(stub1)==reader.vb_r->at(stub2) && reader.vb_phi->at(stub1)==reader.vb_phi->at(stub2) && reader.vb_z->at(stub1)==reader.vb_z->at(stub2)){
 		  if(reader.vb_tpId->at(stub1) <0) Remove[stub]=true;
 		  else if(reader.vb_tpId->at(stub2) <0) Remove[j]=true;
-		  //else Remove[stub]=true;
 		}
 	      }//end adjacent stub comparison
 	      unsigned offset=0;
@@ -175,7 +174,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
 		}
 	      }//end removal procedure
 	    }//end layer loop
-*/
+
 
 	    std::vector<std::vector<float> > stubDeltaS; //pass DeltaS information for each stub to the PDDS
             for (unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer) {
@@ -191,8 +190,11 @@ int TrackFitter::makeTracks(TString src, TString out) {
 	    
 	    //choose either the normal combination building or the 5/6 permutations per 6/6 road in addition and/or pairwise Delta Delta S cleaning (PDDS)
 	    std::vector<std::vector<unsigned> > combinations;
-            if(po_.FiveOfSix || po_.PDDS)	combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix, po_.PDDS);
-	    else 				combinations = combinationFactory_.combine(stubRefs);			
+	    if (po_.oldCB) combinations = combinationFactory_.combine(stubRefs);
+            else if(po_.PDDS) combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix);
+	    else combinations = combinationBuilderFactory_->combine(stubRefs);
+
+	    // std::cout << "combinations = " << combinations.size() << std::endl;
 
             for (unsigned icomb=0; icomb<combinations.size(); ++icomb)
                 assert(combinations.at(icomb).size() == reader.vr_stubRefs->at(iroad).size());
