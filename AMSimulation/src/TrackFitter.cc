@@ -59,7 +59,7 @@ bool PrincipalCuts(std::vector<float> princes){
     TFile *input;
     std::vector<TH1F*> extrapolators;
     void init(){
-      input=new TFile("DeltaSbands_AllExtrapolated_AllWidthsAverage.root","READ");
+      input=new TFile("SLHCL1TrackTriggerSimulations/AMSimulation/data/DeltaSbands_AllExtrapolated_AllWidthsAverage.root","READ");
       for(unsigned i=0; i<6; ++i) extrapolators.push_back((TH1F*)input->Get(TString::Format("Extrapolator%d",i)));   
     }
     float DeltaSchi2(std::vector<std::vector<float> > DeltaS_, float CpT_){
@@ -155,7 +155,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
             // Get combinations of stubRefs
             std::vector<std::vector<unsigned> > stubRefs = reader.vr_stubRefs->at(iroad);
 	    //clean duplicate stubs
-	    if(po_.RemoveClones) for(unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer){
+	    if(po_.removeClones) for(unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer){
 	      std::vector<bool> Remove;
 	      for(unsigned stubs=0; stubs<stubRefs[ilayer].size(); ++stubs) Remove.push_back(false);
 	      for(int stub=0; stub<(int)stubRefs[ilayer].size()-1; ++stub) for(unsigned j=stub+1; j<stubRefs[ilayer].size(); ++j){
@@ -191,7 +191,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
 	    //choose either the normal combination building or the 5/6 permutations per 6/6 road in addition and/or pairwise Delta Delta S cleaning (PDDS)
 	    std::vector<std::vector<unsigned> > combinations;
 	    if (po_.oldCB) combinations = combinationFactory_.combine(stubRefs);
-            else if(po_.PDDS) combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix);
+            else if(po_.PDDS) combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix, po_.PDDS);
 	    else combinations = combinationBuilderFactory_->combine(stubRefs);
 
 	    // std::cout << "combinations = " << combinations.size() << std::endl;

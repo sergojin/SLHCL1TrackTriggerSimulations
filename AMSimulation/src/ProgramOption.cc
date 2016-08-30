@@ -55,7 +55,7 @@ std::ostream& operator<<(std::ostream& o, const ProgramOption& po) {
       << "  view: "         << po.view
       << "  hitBits: "      << po.hitBits
 
-      << " remove Clones "  << po.removeClones
+      << "  remove Clones " << po.removeClones
       << "  maxChi2: "      << po.maxChi2
       << "  CutPrincipals: "<< po.CutPrincipals
       << "  minNdof: "      << po.minNdof
