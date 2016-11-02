@@ -9,13 +9,13 @@ namespace slhcl1tt {
 
   class TrackParametersToTT {
   public:
-    int get_tt(double phi, double invPt, double eta, double z0);
+    int get_tt(double phi, double invPt, double eta, double vz);
 
     double get_phiStar_from_phi(double phi, double invPt, double rStar=90.);
     double get_phi_from_phiStar(double phiStar, double invPt, double rStar=90.);
 
-    double get_etaStar_from_eta(double eta, double z0, double invPt, double rStar=60.);
-    double get_eta_from_etaStar(double etaStar, double z0, double invPt, double rStar=60.);
+    double get_etaStar_from_eta(double eta, double vz, double invPt, double rStar=60.);
+    double get_eta_from_etaStar(double etaStar, double vz, double invPt, double rStar=60.);
   };
 
 }  // namespace slhcl1tt
