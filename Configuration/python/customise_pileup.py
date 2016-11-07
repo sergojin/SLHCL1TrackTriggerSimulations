@@ -10,9 +10,34 @@ def cust_pileup_input(process, sequential=False):
     return (process)
 
 
+def cust_trackingParticles(process):
+    process.mix.digitizers.mergedtruth.maximumPreviousBunchCrossing = cms.uint32(0)
+    process.mix.digitizers.mergedtruth.maximumSubsequentBunchCrossing = cms.uint32(0)
+    process.mix.digitizers.mergedtruth.ignoreTracksOutsideVolume = cms.bool(True)
+
+    process.mix.digitizers.mergedtruth.select = cms.PSet(
+        lipTP = cms.double(300.),
+        chargedOnlyTP = cms.bool(True),
+        stableOnlyTP = cms.bool(False),
+        pdgIdTP = cms.vint32(),
+        signalOnlyTP = cms.bool(False),
+        minRapidityTP = cms.double(-2.5),
+        minHitTP = cms.int32(0),
+        ptMinTP = cms.double(0.2),
+        maxRapidityTP = cms.double(2.5),
+        tipTP = cms.double(120)
+    )
+
+    process.g4SimHits.EnergyThresholdForPersistencyInGeV = cms.double(0.001)
+    process.g4SimHits.EnergyThresholdForHistoryInGeV = cms.double(0.001)
+    return (process)
+
+
 # Run in tracker only, ignoring calorimeter and muon system
 # In CMSSW_6_2_0_SLHC12_patch1, processing speed is reduced to ~0.06 s/evt
 def cust_useTrackerOnly(process, sequential=False, intime=False, ntuple=True, keepSimHits=True):
+
+    process = cust_trackingParticles(process)
 
     # __________________________________________________________________________
     # Customise generation step
