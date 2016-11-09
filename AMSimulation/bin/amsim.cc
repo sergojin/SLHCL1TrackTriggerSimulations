@@ -66,16 +66,16 @@ int main(int argc, char **argv) {
         ("nDCBits"      , po::value<unsigned>(&option.nDCBits)->default_value(0), "Specify # of DC bits")
 
         // Trigger tower selection
-        ("tower,t"      , po::value<unsigned>(&option.tower)->default_value(27), "Specify the trigger tower")
+        ("tower,t"      , po::value<unsigned>(&option.tower)->default_value(25), "Specify the trigger tower")
 
         // Superstrip definition
-        ("superstrip,s" , po::value<std::string>(&option.superstrip)->default_value("ss256_nz2"), "Specify the superstrip definition (default: ss256_nz2)")
+        ("superstrip,s" , po::value<std::string>(&option.superstrip)->default_value("sf1_nz8"), "Specify the superstrip definition (default: sf1_nz8)")
 
         // Track fitting algorithm
         ("algo,f"       , po::value<std::string>(&option.algo)->default_value("LTF"), "Select track fitter -- PCA4: PCA fitter 4 params; PCA5: PCA fitter 5 params; ATF4: ATF fitter 4 params; ATF5: ATF fitter 5 params; LTF: Linearized track fitter (default: LTF)")
 
         // MC truth
-        ("minPt"        , po::value<float>(&option.minPt)->default_value(     2.0), "Specify min pt")
+        ("minPt"        , po::value<float>(&option.minPt)->default_value(     3.0), "Specify min pt")
         ("maxPt"        , po::value<float>(&option.maxPt)->default_value(999999.0), "Specify max pt")
         ("minInvPt"     , po::value<float>(&option.minInvPt)->default_value(-999999.0), "Specify min signed 1/pt")
         ("maxInvPt"     , po::value<float>(&option.maxInvPt)->default_value( 999999.0), "Specify max signed 1/pt")
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 
         // Only for pattern matching
         ("maxPatterns"  , po::value<long int>(&option.maxPatterns)->default_value(999999999), "Specfiy max number of patterns")
-        ("maxMisses"    , po::value<int>(&option.maxMisses)->default_value(0), "Specify max number of allowed misses")
+        ("maxMisses"    , po::value<int>(&option.maxMisses)->default_value(1), "Specify max number of allowed misses (default: 1)")
         ("maxStubs"     , po::value<int>(&option.maxStubs)->default_value(999999999), "Specfiy max number of stubs per superstrip")
         ("maxRoads"     , po::value<int>(&option.maxRoads)->default_value(999999999), "Specfiy max number of roads per event")
 
@@ -107,22 +107,22 @@ int main(int argc, char **argv) {
 
         // Only for track fitting
         ("maxChi2"      , po::value<float>(&option.maxChi2)->default_value(5.), "Specify maximum reduced chi-squared")
-	("CutPrincipals", po::bool_switch(&option.CutPrincipals)->default_value(false), "replace chi**2 cut with principals cut")
+        ("CutPrincipals", po::bool_switch(&option.CutPrincipals)->default_value(false), "replace chi**2 cut with principals cut")
         ("minNdof"      , po::value<int>(&option.minNdof)->default_value(1), "Specify minimum degree of freedom")
         ("maxCombs"     , po::value<int>(&option.maxCombs)->default_value(999999999), "Specfiy max number of combinations per road")
         ("maxTracks"    , po::value<int>(&option.maxTracks)->default_value(999999999), "Specfiy max number of tracks per event")
 
-	// Only for Duplicate Flag
+        // Only for Duplicate Flag
         ("rmDuplicate", po::value<int>(&option.rmDuplicate)->default_value(-1), "Duplicate removal option. The argument is the number of max stubs allowed to be shared between AM tracks")
 
-	// Only for parameter-based duplicate removal
-	("rmParDuplicate", po::bool_switch(&option.rmParDuplicate)->default_value(false), "Parameter-based duplicate removal switch")
+        // Only for parameter-based duplicate removal
+        ("rmParDuplicate", po::bool_switch(&option.rmParDuplicate)->default_value(false), "Parameter-based duplicate removal switch")
 
-	//Only for alternative combination builder configuration
+        //Only for alternative combination builder configuration
         ("oldCB", po::bool_switch(&option.oldCB)->default_value(false), "Use the old combination builder")
-	("FiveOfSix", po::bool_switch(&option.FiveOfSix)->default_value(false), "Do all 5/6 permutations of 6/6 roads in addition")
-	("PDDS", po::bool_switch(&option.PDDS)->default_value(false), "Switch on pairwise Delta Delta S combination cleaning")
-	
+        ("FiveOfSix", po::bool_switch(&option.FiveOfSix)->default_value(false), "Do all 5/6 permutations of 6/6 roads in addition")
+        ("PDDS", po::bool_switch(&option.PDDS)->default_value(false), "Switch on pairwise Delta Delta S combination cleaning")
+
         // Only for NTupleMaker
         ("no-trim"      , po::bool_switch(&option.no_trim)->default_value(false), "Do not trim ntuple branches")
         ;

@@ -49,17 +49,17 @@ struct ProgramOption {
     unsigned    hitBits;
 
     float       maxChi2;
-    bool	CutPrincipals;
+    bool        CutPrincipals;
     int         minNdof;
     int         maxCombs;
     int         maxTracks;
 
-    int 	rmDuplicate;
+    int         rmDuplicate;
     bool        rmParDuplicate;
 
     bool        oldCB;
-    bool	FiveOfSix;
-    bool	PDDS;
+    bool        FiveOfSix;
+    bool        PDDS;
 
     bool        no_trim;
     bool        removeOverlap;
