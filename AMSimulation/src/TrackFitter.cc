@@ -125,10 +125,10 @@ int TrackFitter::makeTracks(TString src, TString out) {
 	        stubDeltaS.push_back(placeholderTemp);
 		if(po_.PDDS) for(unsigned istub=0; istub<stubRefs[ilayer].size(); ++istub) stubDeltaS[ilayer].push_back(reader.vb_trigBend->at(stubRefs[ilayer][istub]));
 		else for(unsigned istub=0; istub<stubRefs[ilayer].size(); ++istub) stubDeltaS[ilayer].push_back(0.); //default DDS is 0 to disable PDDS cleaning
-                if (stubRefs.at(ilayer).size() > (unsigned) po_.maxStubs){
-                    stubRefs.at(ilayer).resize(po_.maxStubs);
-		    stubDeltaS.at(ilayer).resize(po_.maxStubs);
-		}
+                //if (stubRefs.at(ilayer).size() > (unsigned) po_.maxStubs){
+                //    stubRefs.at(ilayer).resize(po_.maxStubs);
+                //    stubDeltaS.at(ilayer).resize(po_.maxStubs);
+                //}
             }
 	    
 	    //choose either the normal combination building or the 5/6 permutations per 6/6 road in addition and/or pairwise Delta Delta S cleaning (PDDS)

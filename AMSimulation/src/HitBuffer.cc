@@ -12,6 +12,7 @@ int HitBuffer::init(unsigned maxBins) {
 
     superstripBools_.clear();
     superstripBools_.resize(maxBins);
+    assert(superstripBools_.size() != 0);
 
     return 0;
 }
@@ -34,11 +35,15 @@ void HitBuffer::insert(superstrip_type ss, unsigned stubRef) {
 void HitBuffer::freeze(unsigned maxStubs) {
     for (std::map<superstrip_type, std::vector<unsigned> >::iterator it=superstripHits_.begin();
          it!=superstripHits_.end(); ++it) {
-        if (it->second.size() > maxStubs)
-            it->second.resize(maxStubs);
+
+        if (it->second.size() > maxStubs) {
+            //it->second.resize(maxStubs);  // keep first N stubs
+
+            it->second.erase(it->second.begin(), it->second.end() - maxStubs);  // keep last N stubs
+            assert(it->second.size() == maxStubs);
+        }
     }
 
-    assert(superstripBools_.size() != 0);
     frozen_ = true;
 }
 
