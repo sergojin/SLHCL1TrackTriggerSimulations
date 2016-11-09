@@ -51,7 +51,7 @@ SuperstripArbiter::SuperstripArbiter()
     // phiWidths for 6 barrel layer [0..5], 5 +z endcap disks [6..10], 5 -z endcap disks [11..15]
     // CUIDADO: dummy values are used for the endcap layers
     phiWidths_ = {
-        0.00381, 0.00439, 0.00459, 0.00485, 0.00523, 0.00575,
+        0.00381*2, 0.00439, 0.00459, 0.00485, 0.00523, 0.00575,
         9.99999, 9.99999, 9.99999, 9.99999, 9.99999,
         9.99999, 9.99999, 9.99999, 9.99999, 9.99999
     };
@@ -305,7 +305,8 @@ void SuperstripArbiter::setDefinition(TString definition, unsigned tt, const Tri
 	  if (fountain_max_nx_ < nx)
 	    fountain_max_nx_ = nx;
         }
-        nsuperstripsPerLayer_ = fountain_max_nx_ * fountain_nz_;
+        //nsuperstripsPerLayer_ = fountain_max_nx_ * fountain_nz_;
+        nsuperstripsPerLayer_ = 1<<12;  // 12-bit superstrip
 	print();
         break;
 
@@ -328,7 +329,8 @@ void SuperstripArbiter::setDefinition(TString definition, unsigned tt, const Tri
 	  if (fountain_max_nx_ < nx)
 	    fountain_max_nx_ = nx;
         }
-        nsuperstripsPerLayer_ = fountain_max_nx_ * fountain_nz_;
+        //nsuperstripsPerLayer_ = fountain_max_nx_ * fountain_nz_;
+        nsuperstripsPerLayer_ = 1<<12;  // 12-bit superstrip
 	print();
         break;
 
@@ -447,7 +449,8 @@ unsigned SuperstripArbiter::superstripFountain(unsigned moduleId, float r, float
     i_phi     = (i_phi < 0) ? 0 : (i_phi >= n_phi) ? (n_phi - 1) : i_phi;  // proper range
     i_z       = (i_z   < 0) ? 0 : (i_z   >= n_z  ) ? (n_z   - 1) : i_z;    // proper range
 
-    unsigned ss = i_z * n_phi + i_phi;
+    //unsigned ss = i_z * n_phi + i_phi;
+    unsigned ss = ((i_z & 0x7) << 9) | (i_phi & 0x1ff);  // use magic number of 512 (= 1<<9)
     return ss;
 }
 
