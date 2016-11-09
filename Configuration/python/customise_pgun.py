@@ -37,8 +37,8 @@ def cust_useTrackerOnly(process, intime=True, ntuple=True, keepSimHits=True):
     process.pgen = process.pgen.copyAndExclude([process.genJetMET])
 
     # Keep track of random number seeds
-    process.load('SLHCL1TrackTriggerSimulations.NTupleTools.randomEngineSeedKeeper_cfi')
-    process.pgen += process.randomEngineSeedKeeper
+    #process.load('SLHCL1TrackTriggerSimulations.NTupleTools.randomEngineSeedKeeper_cfi')
+    #process.pgen += process.randomEngineSeedKeeper
 
     # __________________________________________________________________________
     # Customise simulation step
