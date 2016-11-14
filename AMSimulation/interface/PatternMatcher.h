@@ -28,10 +28,10 @@ class PatternMatcher {
         arbiter_->setDefinition(po_.superstrip, po_.tower, ttmap_);
 
         if (removeOverlap_) {
-        	momap_   = new ModuleOverlapMap();
-        	momap_->readModuleOverlapMap(po_.datadir);
+            momap_   = new ModuleOverlapMap();
+            momap_->readModuleOverlapMap(po_.datadir);
         }
-}
+    }
 
     // Destructor
     ~PatternMatcher() {
