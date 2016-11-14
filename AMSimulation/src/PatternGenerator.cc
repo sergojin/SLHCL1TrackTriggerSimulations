@@ -38,6 +38,9 @@ int PatternGenerator::makePatterns(TString src) {
     pattern_type patt;
     patt.fill(0);
 
+    PatternAttribute zero_attr;
+    zero_attr.reset();
+
     // Bookkeepers
     float coverage = 0.;
     long int bankSize = 0, bankSizeOld = -100000, nKeptOld = -100000;
@@ -131,23 +134,9 @@ int PatternGenerator::makePatterns(TString src) {
 
         // Update the attributes
         if (po_.speedup<1) {
-            std::pair<std::map<pattern_type, Attributes *>::iterator, bool> ins = patternAttributes_map_.insert(std::make_pair(patt, new Attributes()));
-            Attributes * attr = ins.first->second;
-            if (attr) {
-                ++ attr->n;
-                attr->invPt.fill(simChargeOverPt);
-                attr->cotTheta.fill(simCotTheta);
-                attr->phi.fill(simPhi);
-                attr->z0.fill(simVz);
-            }
-        }
-        else if (po_.speedup==1) {
-            std::pair<std::map<pattern_type, ShortAttributes *>::iterator, bool> ins = patternShortAttributes_map_.insert(std::make_pair(patt, new ShortAttributes()));
-            ShortAttributes * attr = ins.first->second;
-            if (attr) {
-                attr->invPt.fill(simChargeOverPt);
-                attr->phi.fill(simPhi);
-            }
+            std::pair<std::map<pattern_type, PatternAttribute>::iterator, bool> ins = patternAttributes_map_.insert(std::make_pair(patt, zero_attr));
+            PatternAttribute& attr = ins.first->second;  // pass by reference
+            attr.fill(simChargeOverPt, simCotTheta, simPhi, simVz);
         }
 
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " patt: " << patt << std::endl;
@@ -266,22 +255,17 @@ int PatternGenerator::writePatterns(TString out) {
         *(writer.pb_frequency) = freq;
 
         if (po_.speedup<1) {
-            const Attributes * attr = patternAttributes_map_.at(patt);
-            *(writer.pb_invPt_mean)     = attr->invPt.getMean();
-            *(writer.pb_invPt_sigma)    = attr->invPt.getSigma();
-            *(writer.pb_cotTheta_mean)  = attr->cotTheta.getMean();
-            *(writer.pb_cotTheta_sigma) = attr->cotTheta.getSigma();
-            *(writer.pb_phi_mean)       = attr->phi.getMean();
-            *(writer.pb_phi_sigma)      = attr->phi.getSigma();
-            *(writer.pb_z0_mean)        = attr->z0.getMean();
-            *(writer.pb_z0_sigma)       = attr->z0.getSigma();
-        }
-        else if (po_.speedup==1) {
-            const ShortAttributes * attr = patternShortAttributes_map_.at(patt);
-            *(writer.pb_invPt_mean)     = attr->invPt.getMean();
-            *(writer.pb_invPt_sigma)    = attr->invPt.getSigma();
-            *(writer.pb_phi_mean)       = attr->phi.getMean();
-            *(writer.pb_phi_sigma)      = attr->phi.getSigma();
+            const PatternAttribute& attr = patternAttributes_map_.at(patt);
+            assert(freq == attr.n);
+
+            *(writer.pb_invPt_mean)     = attr.invPt_mean;
+            *(writer.pb_invPt_sigma)    = std::sqrt(attr.invPt_variance);
+            *(writer.pb_cotTheta_mean)  = attr.cotTheta_mean;
+            *(writer.pb_cotTheta_sigma) = std::sqrt(attr.cotTheta_variance);
+            *(writer.pb_phi_mean)       = attr.phi_mean;
+            *(writer.pb_phi_sigma)      = std::sqrt(attr.phi_variance);
+            *(writer.pb_z0_mean)        = attr.z0_mean;
+            *(writer.pb_z0_sigma)       = std::sqrt(attr.z0_variance);
         }
 
         writer.fillPatternBank();
@@ -293,10 +277,10 @@ int PatternGenerator::writePatterns(TString out) {
     assert(coverage_count_ == nKept);
 
     if (verbose_)  {
-    	std::cout << Info() << "After sorting by frequency: " << std::endl;
-    	std::cout << Info() << " N(90% cov) = " << n90 << "\tPopularity = " << patternBank_pairs_.at(n90).second << std::endl;
-    	std::cout << Info() << " N(95% cov) = " << n95 << "\tPopularity = " << patternBank_pairs_.at(n95).second << std::endl;
-    	std::cout << Info() << " N(99% cov) = " << n99 << "\tPopularity = " << patternBank_pairs_.at(n99).second << std::endl;
+      std::cout << Info() << "After sorting by frequency: " << std::endl;
+      std::cout << Info() << " N(90% cov) = " << n90 << "\tPopularity = " << patternBank_pairs_.at(n90).second << std::endl;
+      std::cout << Info() << " N(95% cov) = " << n95 << "\tPopularity = " << patternBank_pairs_.at(n95).second << std::endl;
+      std::cout << Info() << " N(99% cov) = " << n99 << "\tPopularity = " << patternBank_pairs_.at(n99).second << std::endl;
     }
 
     return 0;
