@@ -3,11 +3,13 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process('NTUPLE')
 runOnMC = True
 
-from FWCore.ParameterSet.VarParsing import VarParsing
-options = VarParsing('analysis')
-options.setDefault('inputFiles', ['file:rawsim_numEvent100.root']
-options.setDefault('outputFile', 'ntuple.root')
-options.parseArguments()
+class Options:
+    pass
+
+options = Options()
+options.inputFiles = ['root://cmsxrootd.fnal.gov///store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/004C20AB-4D9E-E611-AE77-00266CFFBDAC.root']
+options.outputFile = 'ntuple.root'
+options.maxEvents = -1
 
 
 ## MessageLogger
@@ -37,6 +39,8 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 
 process.load('Geometry.TrackerGeometryBuilder.StackedTrackerGeometry_cfi')
+process.load('Configuration.StandardSequences.L1TrackTrigger_cff')
+process.L1TrackTrigger_custom=cms.Sequence(process.BeamSpotFromSim+process.TTTracksFromPixelDigis+process.TTTrackAssociatorFromPixelDigis)
 
 ## Make the ntuple
 process.TFileService = cms.Service("TFileService",
@@ -45,11 +49,12 @@ process.TFileService = cms.Service("TFileService",
 process.load("SLHCL1TrackTriggerSimulations.NTupleTools.sequences_cff")
 
 ## Paths and schedule
-process.p = cms.Path(process.ntupleSequence)
-process.schedule = cms.Schedule(process.p)
+process.L1TrackTrigger_step=cms.Path(process.L1TrackTrigger_custom)
+process.p = cms.Path(process.ntupleSequence_TTI)
+process.schedule = cms.Schedule(process.L1TrackTrigger_step,process.p)
 
 
 # Configure framework report and summary
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
 

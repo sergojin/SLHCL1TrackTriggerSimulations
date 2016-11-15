@@ -34,4 +34,5 @@ ntupleMixedSimHits = cms.EDProducer('NTupleMixedSimHits',
 )
 
 ntupleDigi = cms.Sequence(ntupleTrackingParticles * ntupleTrackingVertices * ntupleMixedSimHits)
+ntupleDigi_TTI = cms.Sequence(ntupleTrackingParticles * ntupleTrackingVertices)
 
