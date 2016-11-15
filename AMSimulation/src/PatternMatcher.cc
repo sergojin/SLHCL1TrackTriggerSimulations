@@ -89,7 +89,7 @@ int PatternMatcher::loadPatterns(TString bank) {
             pattHash.at(layer) = ssIdHash;
         }
 
-        associativeMemory_.insert(pattHash, pattInvPt);
+        associativeMemory_.insert(pattHash, pattInvPt, pbreader.pb_frequency);
     }
 
     associativeMemory_.freeze();
@@ -285,10 +285,11 @@ int PatternMatcher::makeRoads(TString src, TString out) {
             aroad.tower        = po_.tower;
             aroad.nstubs       = 0;
             aroad.patternInvPt = 0.;
+            aroad.patternFreq  = 0;
 
             // Retrieve the superstripIds and other attributes
             pattern_type pattHash;
-            associativeMemory_.retrieve(aroad.patternRef, pattHash, aroad.patternInvPt);
+            associativeMemory_.retrieve(aroad.patternRef, pattHash, aroad.patternInvPt, aroad.patternFreq);
 
             aroad.superstripIds.clear();
             aroad.stubRefs.clear();
