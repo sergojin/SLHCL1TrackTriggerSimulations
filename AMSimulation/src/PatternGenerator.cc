@@ -225,24 +225,24 @@ int PatternGenerator::writePatterns(TString out) {
     int n90=0, n95=0, n99=0;
 
     for (long long ipatt=0; ipatt<npatterns; ++ipatt) {
-        if (verbose_>1 && ipatt%100==0) {
-            float coverage = float(nKept) / coverage_count_ * coverage_;
-            if (coverage < 0.90 + 1e-5)
-                n90 = ipatt;
-            else if (coverage < 0.95 + 1e-5)
-                n95 = ipatt;
-            else if (coverage < 0.99 + 1e-5)
-                n99 = ipatt;
-
-            if (ipatt%1000==0) std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ipatt, coverage) << std::endl;
-        }
-
         freq = patternBank_pairs_.at(ipatt).second;
 
         // Check whether patterns are indeed sorted by frequency
         assert(oldFreq >= freq);
         oldFreq = freq;
         nKept += freq;
+
+        float coverage = float(nKept) / coverage_count_ * coverage_;
+        if (!(coverage >= 0.90))
+            n90 = ipatt;
+        if (!(coverage >= 0.95))
+            n95 = ipatt;
+        if (!(coverage >= 0.99))
+            n99 = ipatt;
+
+        if (verbose_>1 && ipatt%1000==0) {
+            std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ipatt, coverage) << std::endl;
+        }
 
         if (freq < (unsigned) po_.minFrequency)  // cut off
             break;
