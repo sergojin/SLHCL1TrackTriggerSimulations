@@ -57,9 +57,10 @@ std::vector<unsigned> AssociativeMemory::lookup(const HitBuffer& hitBuffer, cons
 
         for (pattern_type::const_reverse_iterator itlayer = itpatt->rend() - nLayers;
              itlayer != itpatt->rend(); ++itlayer) {
+            unsigned layer = (itpatt->rend() - 1) - itlayer;
 
             const superstrip_type ss = *itlayer;
-            if (!hitBuffer.isHit(ss))
+            if (!hitBuffer.isHit(layer, ss))
                 ++nMisses;
 
             // Skip if more misses than allowed
