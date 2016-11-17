@@ -4,6 +4,8 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/Pattern.h"
 
 #include "TFile.h"
+#include "TFileCollection.h"
+#include "TFileInfo.h"
 #include "TROOT.h"
 #include "TString.h"
 #include "TTree.h"

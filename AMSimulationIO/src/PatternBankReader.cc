@@ -33,12 +33,25 @@ PatternBankReader::~PatternBankReader() {
 }
 
 int PatternBankReader::init(TString src) {
-    if (!src.EndsWith(".root")) {
-        std::cout << Error() << "Input source must be .root" << std::endl;
+    if (!src.EndsWith(".root") && !src.EndsWith(".txt")) {
+        std::cout << Error() << "Input source must be either .root or .txt" << std::endl;
         return 1;
     }
 
     if (verbose_)  std::cout << Info() << "Opening " << src << std::endl;
+
+    if (src.EndsWith(".txt")) {
+        TFileCollection fc("fileinfolist", "", src);
+
+        TCollection* filelist = (TCollection*) fc.GetList();
+        TIter next(filelist);
+        TFileInfo* fi = (TFileInfo*) next();
+        src = (fi->GetCurrentUrl()) ? fi->GetCurrentUrl()->GetUrl() : 0;
+        if (!src.EndsWith(".root")) {
+            std::cout << Error() << "Input source must be .root" << std::endl;
+        }
+    }
+
     tfile = TFile::Open(src);
 
     if (tfile) {
