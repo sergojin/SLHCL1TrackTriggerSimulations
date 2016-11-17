@@ -309,6 +309,11 @@ int PatternMatcher::makeRoads(TString src, TString out) {
         if (! roads.empty())
             ++nKept;
 
+        // Sort roads by pT
+        std::stable_sort(roads.begin(), roads.end(), [](const TTRoad& lhs, const TTRoad& rhs) {
+          return (std::abs(lhs.patternInvPt) < std::abs(rhs.patternInvPt));  // higher pT first
+        });
+
         assert(reader.vb_modId->size() == stubs_bitString.size());
         assert(reader.vb_modId->size() == stubs_superstripId.size());
 
