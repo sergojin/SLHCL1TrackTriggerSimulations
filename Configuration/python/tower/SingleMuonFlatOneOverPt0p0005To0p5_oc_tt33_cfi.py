@@ -3,7 +3,7 @@ import FWCore.ParameterSet.Config as cms
 # reference: https://github.com/cms-sw/genproductions/blob/master/python/EightTeV/SingleMuMinusFlatPt0p2To100_cff.py
 
 # Calculate tower eta, phi boundaries
-_tower = 25
+_tower = 33
 _pi = 3.141592653589793
 _min_eta = (_tower/8)*2.2/3 - 2.2
 _max_eta = _min_eta + 2.2/3
