@@ -7,7 +7,12 @@ class Options:
     pass
 
 options = Options()
-options.inputFiles = ['root://cmsxrootd.fnal.gov///store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/004C20AB-4D9E-E611-AE77-00266CFFBDAC.root']
+options.inputFiles = [
+'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/004C20AB-4D9E-E611-AE77-00266CFFBDAC.root',
+'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/007F6C2E-5A9E-E611-B0E2-C4346BC8D390.root',
+'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/0208AEA5-4D9E-E611-ACE8-00266CFFCCC8.root',
+'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/02A8431A-4E9E-E611-B3D0-00266CFFBF34.root',
+]
 options.outputFile = 'ntuple.root'
 options.maxEvents = -1
 
