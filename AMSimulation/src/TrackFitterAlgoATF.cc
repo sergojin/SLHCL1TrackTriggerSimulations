@@ -264,7 +264,8 @@ int TrackFitterAlgoATF::fit(const TTRoadComb& acomb, TTTrack2& atrack)
     double chi2_z   = Q + M*pow(z0, 2) + I*pow(cottheta0*(1.-(d0*rinv/2.)), 2) - 2.*L*z0 - 2.*G*cottheta0*(1.-(d0*rinv/2.))
                     + 2.*H*z0*cottheta0*(1.-(d0*rinv/2.));
 
-    atrack.setTrackParams(rinv, phi0, cottheta0, z0, d0, chi2, ndof, chi2_phi, chi2_z);
+    //atrack.setTrackParams(rinv, phi0, cottheta0, z0, d0, chi2, ndof, chi2_phi, chi2_z);
+    atrack.setTrackParams(rinv, phi0, cottheta0, z0, d0, chi2, ndof);
   }
   else
   {
@@ -288,7 +289,8 @@ int TrackFitterAlgoATF::fit(const TTRoadComb& acomb, TTTrack2& atrack)
 
     double chi2_z = Q - L*z0 - G*cottheta0;
     
-    atrack.setTrackParams(rinv, phi0, cottheta0, z0, 0, chi2, ndof, chi2_phi, chi2_z);
+    //atrack.setTrackParams(rinv, phi0, cottheta0, z0, 0, chi2, ndof, chi2_phi, chi2_z);
+    atrack.setTrackParams(rinv, phi0, cottheta0, z0, 0, chi2, ndof);
   }
 
   return 0;

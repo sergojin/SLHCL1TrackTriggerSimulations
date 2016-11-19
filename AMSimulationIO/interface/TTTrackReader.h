@@ -1,7 +1,7 @@
 #ifndef AMSimulationIO_TTTrackReader_h_
 #define AMSimulationIO_TTTrackReader_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack.h"
+//#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTRoadReader.h"
 
@@ -29,7 +29,7 @@ class TTTrackWriter : public BasicWriter {
 
     int init(TChain* tchain, TString out, TString prefix, TString suffix);
 
-    void fill(const std::vector<TTTrack>& tracks);
+    //void fill(const std::vector<TTTrack>& tracks);
 
     void fill(const std::vector<TTTrack2>& tracks);
 
@@ -52,10 +52,8 @@ class TTTrackWriter : public BasicWriter {
     std::auto_ptr<std::vector<float> >                  vt_d0;
     std::auto_ptr<std::vector<float> >                  vt_chi2;
     std::auto_ptr<std::vector<int> >                    vt_ndof;
-    std::auto_ptr<std::vector<float> >                  vt_chi2_phi;
-    std::auto_ptr<std::vector<float> >                  vt_chi2_z;
-    std::auto_ptr<std::vector<float> >     		vt_matchChi2; //Stores only the match chi2 for the best AM track
-    std::auto_ptr<std::vector<bool> >                   vt_isGhost;
+    std::auto_ptr<std::vector<float> >                  vt_synMatchChi2;
+    std::auto_ptr<std::vector<int> >                    vt_synMatchCat;
     std::auto_ptr<std::vector<int> >                    vt_tpId;
     std::auto_ptr<std::vector<int> >                    vt_synTpId;
     std::auto_ptr<std::vector<unsigned> >               vt_tower;

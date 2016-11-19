@@ -17,7 +17,7 @@ int TrackFitterAlgoLTF::fit(const TTRoadComb& acomb, TTTrack2& atrack) {
 
     int ndof = linearizedTrackFitter_->ndof();
 
-    atrack.setTrackParams(0.003 * 3.8 * pars[0], pars[1], pars[2], pars[3], 0, normChi2*ndof, ndof, 0, 0);
+    atrack.setTrackParams(0.003 * 3.8 * pars[0], pars[1], pars[2], pars[3], 0, normChi2*ndof, ndof);
 
     std::vector<float> principals_vec;
     for (unsigned ivar=0; ivar<principals.size(); ++ivar) {

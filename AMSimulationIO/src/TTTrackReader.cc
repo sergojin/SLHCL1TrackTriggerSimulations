@@ -39,9 +39,8 @@ TTTrackWriter::TTTrackWriter(int verbose)
   vt_d0           (new std::vector<float>()),
   vt_chi2         (new std::vector<float>()),
   vt_ndof         (new std::vector<int>()),
-  vt_chi2_phi     (new std::vector<float>()),
-  vt_chi2_z       (new std::vector<float>()),
-  vt_isGhost      (new std::vector<bool>()),
+  vt_synMatchChi2 (new std::vector<float>()),
+  vt_synMatchCat  (new std::vector<int>()),
   vt_tpId         (new std::vector<int>()),
   vt_synTpId      (new std::vector<int>()),
   vt_tower        (new std::vector<unsigned>()),
@@ -77,9 +76,8 @@ int TTTrackWriter::init(TChain* tchain, TString out, TString prefix, TString suf
     ttree->Branch(prefix + "d0"             + suffix, &(*vt_d0));
     ttree->Branch(prefix + "chi2"           + suffix, &(*vt_chi2));
     ttree->Branch(prefix + "ndof"           + suffix, &(*vt_ndof));
-    ttree->Branch(prefix + "chi2_phi"       + suffix, &(*vt_chi2_phi));
-    ttree->Branch(prefix + "chi2_z"         + suffix, &(*vt_chi2_z));
-    ttree->Branch(prefix + "isGhost"        + suffix, &(*vt_isGhost));
+    ttree->Branch(prefix + "synMatchChi2"   + suffix, &(*vt_synMatchChi2));
+    ttree->Branch(prefix + "synMatchCat"    + suffix, &(*vt_synMatchCat));
     ttree->Branch(prefix + "tpId"           + suffix, &(*vt_tpId));
     ttree->Branch(prefix + "synTpId"        + suffix, &(*vt_synTpId));
     ttree->Branch(prefix + "tower"          + suffix, &(*vt_tower));
@@ -91,65 +89,6 @@ int TTTrackWriter::init(TChain* tchain, TString out, TString prefix, TString suf
     ttree->Branch(prefix + "stubRefs"       + suffix, &(*vt_stubRefs));
     ttree->Branch(prefix + "principals"     + suffix, &(*vt_principals));
     return 0;
-}
-
-void TTTrackWriter::fill(const std::vector<TTTrack>& tracks) {
-    vt_px              ->clear();
-    vt_py              ->clear();
-    vt_pz              ->clear();
-    vt_pt              ->clear();
-    vt_eta             ->clear();
-    vt_phi             ->clear();
-    vt_vx              ->clear();
-    vt_vy              ->clear();
-    vt_vz              ->clear();
-    vt_rinv            ->clear();
-    vt_phi0            ->clear();
-    vt_cottheta        ->clear();
-    vt_z0              ->clear();
-    vt_d0              ->clear();
-    vt_chi2            ->clear();
-    vt_ndof            ->clear();
-    vt_chi2_phi        ->clear();
-    vt_chi2_z          ->clear();
-    vt_tpId            ->clear();
-    vt_tower           ->clear();
-    vt_roadRef         ->clear();
-    vt_stubRefs        ->clear();
-
-    const unsigned ntracks = tracks.size();
-    for (unsigned i=0; i<ntracks; ++i) {
-        const TTTrack& track = tracks.at(i);
-        const GlobalVector& momentum = track.getMomentum();
-        const GlobalPoint&  poca = track.getPOCA();
-        const TTTrackParam& param = track.getTrackParam();
-
-        //vt_px              ->push_back(momentum.x());
-        //vt_py              ->push_back(momentum.y());
-        //vt_pz              ->push_back(momentum.z());
-        vt_pt              ->push_back(std::sqrt(momentum.perp2()));
-        vt_eta             ->push_back(momentum.eta());
-        //vt_phi             ->push_back(momentum.phi());
-        //vt_vx              ->push_back(poca.x());
-        //vt_vy              ->push_back(poca.y());
-        //vt_vz              ->push_back(poca.z());
-        vt_rinv            ->push_back(param.rinv);
-        vt_phi0            ->push_back(param.phi0);
-        vt_cottheta        ->push_back(param.cottheta);
-        vt_z0              ->push_back(param.z0);
-        vt_d0              ->push_back(param.d0);
-        vt_chi2            ->push_back(param.chi2);
-        vt_ndof            ->push_back(param.ndof);
-        vt_chi2_phi        ->push_back(-999999.);  // dummy
-        vt_chi2_z          ->push_back(-999999.);  // dummy
-        vt_tpId            ->push_back(-1);        // dummy
-        //vt_tower           ->push_back(track.getSector());
-        vt_roadRef         ->push_back(track.getRoadRef());
-        vt_stubRefs        ->push_back(track.getStubRefs());
-    }
-
-    ttree->Fill();
-    assert(vt_px->size() == ntracks);
 }
 
 void TTTrackWriter::fill(const std::vector<TTTrack2>& tracks) {
@@ -170,9 +109,8 @@ void TTTrackWriter::fill(const std::vector<TTTrack2>& tracks) {
     vt_d0              ->clear();
     vt_chi2            ->clear();
     vt_ndof            ->clear();
-    vt_chi2_phi        ->clear();
-    vt_chi2_z          ->clear();
-    vt_isGhost         ->clear();
+    vt_synMatchChi2    ->clear();
+    vt_synMatchCat     ->clear();
     vt_tpId            ->clear();
     vt_synTpId         ->clear();
     vt_tower           ->clear();
@@ -205,9 +143,8 @@ void TTTrackWriter::fill(const std::vector<TTTrack2>& tracks) {
         vt_d0              ->push_back(track.d0());
         vt_chi2            ->push_back(track.chi2());
         vt_ndof            ->push_back(track.ndof());
-        vt_chi2_phi        ->push_back(track.chi2_phi());
-        vt_chi2_z          ->push_back(track.chi2_z());
-        vt_isGhost         ->push_back(track.isGhost());
+        vt_synMatchChi2    ->push_back(track.synMatchChi2());
+        vt_synMatchCat     ->push_back(track.synMatchCat());
         vt_tpId            ->push_back(track.tpId());
         vt_synTpId         ->push_back(track.synTpId());
         vt_tower           ->push_back(track.tower());
