@@ -5,26 +5,25 @@ using namespace slhcl1tt;
 #include <cassert>
 #include <iostream>
 #include <map>
+
 #include <TMath.h>
-#define  debug 0
-#define  tt27_cuts 0
 
 namespace {
 // Comparator
 bool sortByPt(const TrackingParticle& lhs, const TrackingParticle& rhs) {
-    return (1.0/std::fabs(lhs.invPt)) > (1.0/std::fabs(rhs.invPt));
+    return (1.0/std::abs(lhs.invPt)) > (1.0/std::abs(rhs.invPt));
 }
 
-bool sortForSynEff(const TTTrack2& ltk, const TTTrack2& rtk){
-  return (ltk.ndof() > rtk.ndof()) || (ltk.ndof() == rtk.ndof() && ltk.pt() > rtk.pt());
+bool sortByLogicPt(const TTTrack2& ltk, const TTTrack2& rtk) {
+    return (ltk.ndof() > rtk.ndof()) || (ltk.ndof() == rtk.ndof() && ltk.pt() > rtk.pt());
 }
 
 bool sortByMatchQuality(const std::pair<unsigned, float>& lhs, const std::pair<unsigned, float>& rhs) {
     return lhs.second < rhs.second;  // smaller is better
 }
 
-float fabsDiff(float lhs, float rhs) {
-    return std::fabs(lhs - rhs);
+float absDiff(float lhs, float rhs) {
+    return std::abs(lhs - rhs);
 }
 
 float squaredNormDiff(float lhs, float rhs, float scale) {
@@ -67,8 +66,6 @@ float resolution(float qbpT, std::string trk_param){
 
   static const float degrees_of_freedom = 4.0;
   static const float match_chi2_cut   = 12.8;
-
-
 }
 
 // _____________________________________________________________________________
@@ -94,39 +91,38 @@ MCTruthAssociator::MCTruthAssociator() {
 
 // _____________________________________________________________________________
 void MCTruthAssociator::associate(std::vector<TrackingParticle>& trkParts, std::vector<TTTrack2>& tracks) {
-
     // Sort tracking particles by pT
     std::sort(trkParts.begin(), trkParts.end(), sortByPt);
 
     // Sort by Logic and pT combined
-    std::sort(tracks.begin(), tracks.end(), sortForSynEff);
-    
+    std::sort(tracks.begin(), tracks.end(), sortByLogicPt);
+
     const unsigned nparts  = trkParts.size();
     const unsigned ntracks = tracks.size();
 
-    // Create the map for matching
-    //std::map<unsigned, std::vector<std::pair<unsigned, float> > > matches;  // key=ipart, value=vector of (itrack, quality) pair
-
-    // Loop on all tracking particles
+    //// Create the map for matching
+    //std::map<unsigned, std::vector<std::pair<unsigned, float> > > matches;  // key=ipart, value=vector of (itrac
+    //
+    //// Loop on all tracking particles
     //for (unsigned ipart=0; ipart<nparts; ++ipart) {
     //    const TrackingParticle& trkPart = trkParts.at(ipart);
     //    assert(trkParts.at(ipart).tpId >= 0);
-
+    //
     //    std::vector<std::pair<unsigned, float> >& ipart_matches = matches[ipart];
     //    assert(ipart_matches.size() == 0);
-
-        // Loop on all reconstructed tracks
+    //
+    //    // Loop on all reconstructed tracks
     //    for (unsigned itrack=0; itrack<ntracks; ++itrack) {
     //        const TTTrack2& track = tracks.at(itrack);
-    //        float quality = 1.e15;  // It will be now the match chi2 value
-
+    //        float quality = 999.;  // smaller is better
+    //
     //        if (accept(trkPart, track, quality)) {
     //            ipart_matches.push_back(std::make_pair(itrack, quality));
     //        }
-    //    }
-    //}
-
-    // Debug
+    //    }  // end loop on all reconstructed tracks
+    //}  // end loop on all tracking particles
+    //
+    //// Debug
     //for (unsigned ipart=0; ipart<nparts; ++ipart) {
     //    const std::vector<std::pair<unsigned, float> >& ipart_matches = matches.at(ipart);
     //    for (unsigned imatch=0; imatch<ipart_matches.size(); ++imatch) {
@@ -136,71 +132,55 @@ void MCTruthAssociator::associate(std::vector<TrackingParticle>& trkParts, std::
     //    }
     //}
 
-    // Stores flags to each MC/AM track
+    // Initiate each tracking particle as not found
     std::vector<int> mcCategories(nparts, ParticleCategory::NOTFOUND);
-    std::vector<int> recoCategories(ntracks, TrackCategory::FAKE);
 
     // Loop on all tracking particles
-    if(debug == 1) std::cout<<"\n\n"<<"----------- New Event -----------"<<std::endl;
-    //if(debug == 1) std::cout<<"MC tracks: "<<nparts<<"\t\tAM tracks: "<<ntracks<<std::endl;
     for (unsigned ipart=0; ipart<nparts; ++ipart) {
-	if(tt27_cuts == 1){
-	  float Pt   = 1./fabs(trkParts.at(ipart).invPt);
-	  float Phi0 = trkParts.at(ipart).phi0;
-	  float Eta  = TMath::ASinH(trkParts.at(ipart).cottheta);
-	  if(Pt < 3) std::cout<<"MC Track with Pt < 3GeV"<<std::endl; 
-	  if(Phi0 < 3.14/4. || Phi0 > 3.14/2.) std::cout<<"MC Track out of Phi cuts"<<std::endl;
-	  if(Eta < 0 || Eta > 0.733333) std::cout<<"MC Track out of Eta cuts"<<std::endl;
-	}
-	if(debug == 1) std::cout<<"["<<ipart<<"] Part_tpId --> "<<trkParts.at(ipart).tpId<<"\tPart_pdgId --> "<<trkParts.at(ipart).pdgId<<"\tPt --> "<<1./fabs(trkParts.at(ipart).invPt)<<std::endl;
 
         bool foundTheBest = false;
-	float best_quality = match_chi2_cut, i_quality = -1;
-	int best_match_id = -1;
-        for (unsigned am_itrack=0; am_itrack<ntracks; ++am_itrack) {// Loop over reco tracks
-	    //std::cout<<"AM Track Chi2/ndof(from FITTER): "<<tracks.at(am_itrack).chi2()/tracks.at(am_itrack).ndof()<<std::endl;
+        float best_quality = match_chi2_cut, quality = -999999.;
+        int best_match_id = -1;
 
-            // Compute our match chi2 definition for each combination and 
-	    // checks if it is below our defined threshold (12.8)
-	    bool accpt_quality = accept(trkParts.at(ipart), tracks.at(am_itrack), i_quality);
+        // Loop on all reconstructed tracks
+        for (unsigned itrack=0; itrack<ntracks; ++itrack) {
 
-	    // Debug
-	    if(debug == 1) std::cout<<"AM Track --> "<<am_itrack<<"\tLogic --> "<<tracks.at(am_itrack).ndof()<<"\tPt --> "<<tracks.at(am_itrack).pt()<<"\tQuality --> "<<i_quality<<"\tCat: "<<recoCategories.at(am_itrack)<<std::endl;
+            // Compute our match chi2 definition for each combination and
+            // checks if it is below our defined threshold (12.8)
+            bool accept_quality = accept(trkParts.at(ipart), tracks.at(itrack), quality);
 
-	    // If matchChi2 > 12.8 keeps the FAKE flag for AM track
-	    if(!accpt_quality) continue;
+            // If matchChi2 > 12.8 keeps the FAKE flag for AM track
+            if (!accept_quality) continue;
 
-            // Debug (checking i_quality dump)
-            //std::cout<<"AM Track --> "<<am_itrack<<"\tLogic --> "<<tracks.at(am_itrack).ndof()<<"\tPt --> "<<tracks.at(am_itrack).pt()<<"\tQuality --> "<<i_quality<<"\tisDuplicate --> "<<tracks.at(am_itrack).isDuplicate()<<std::endl;
 
-	    // If AM track is not marked as good track, then categorize the track
-	    if(recoCategories.at(am_itrack) != TrackCategory::GOOD){
-            
-		// Any AM track at this stage is below the match chi2 cut
-		// then it will be good or duplicate
-		recoCategories.at(am_itrack) = TrackCategory::DUPLICATE;
-                tracks.at(am_itrack).setTpId(trkParts.at(ipart).tpId);
+            // If AM track is not marked as good track, then categorize the track
+            if (tracks.at(itrack).synMatchCat() != TrackCategory::GOOD) {
 
-		// Find the AM track that best matches with the real track
-		if(i_quality < best_quality){
-  		   best_match_id = am_itrack;
-		   best_quality  = i_quality;
+                // Any AM track at this stage is below the match chi2 cut
+                // then it will be good or duplicate
+                tracks.at(itrack).setSynMatchChi2(quality);
+                tracks.at(itrack).setSynMatchCat(TrackCategory::DUPLICATE);
+                tracks.at(itrack).setSynTpId(trkParts.at(ipart).tpId);
+
+                // Find the AM track that best matches with the real track
+                if (quality < best_quality) {
+                   best_match_id = itrack;
+                   best_quality  = quality;
                    foundTheBest  = true;
-		}
+                }
             }
-	}// End loop over AM tracks            
-	    
-	if(foundTheBest){
-           //if(debug == 1) std::cout<<"bestMatchId: "<<best_match_id<<std::endl;
+        }  // end loop on all reconstructed tracks
+
+        if (foundTheBest) {
            mcCategories.at(ipart) = ParticleCategory::FOUND;
-           tracks.at(best_match_id).setMatchChi2(best_quality);
-           tracks.at(best_match_id).setTpId(trkParts.at(ipart).tpId);
-           recoCategories.at(best_match_id) = TrackCategory::GOOD;
-	}
+           tracks.at(best_match_id).setSynMatchChi2(best_quality);
+           tracks.at(best_match_id).setSynMatchCat(TrackCategory::GOOD);
+           tracks.at(best_match_id).setSynTpId(trkParts.at(ipart).tpId);
+        }
 
-    }// End loop over tracking particles
+    }  // end loop on all tracking particles
 
-    
+
     // Sanity check
     unsigned ngoods = 0, nduplicates = 0, nfakes = 0, nfounds = 0, nnotfounds = 0;
 
@@ -213,36 +193,28 @@ void MCTruthAssociator::associate(std::vector<TrackingParticle>& trkParts, std::
     }
 
     for (unsigned itrack=0; itrack<ntracks; ++itrack) {
-        const int cat = recoCategories.at(itrack);
-        tracks.at(itrack).setSynTpId(cat);
-
+        const int cat = tracks.at(itrack).synMatchCat();
         if (cat == TrackCategory::FAKE)
-          ++nfakes;
+            ++nfakes;
         else if (cat == TrackCategory::DUPLICATE)
-          ++nduplicates;
+            ++nduplicates;
         else
-          ++ngoods;
+            ++ngoods;
     }
-    
-    // Debug
-    if(debug == 1) std::cout<<"Found --> "<<nfounds<<"\tNotFond --> "<<nnotfounds<<std::endl;
-    if(debug == 1) std::cout<<"Good --> "<<ngoods<<"\tDuplicates --> "<<nduplicates<<"\tFakes --> "<<nfakes<<std::endl;
+
     assert(nfounds + nnotfounds == nparts);
     assert(ngoods + nduplicates + nfakes == ntracks);
     assert(nfounds == ngoods);
 }
 
 // _____________________________________________________________________________
-bool MCTruthAssociator::accept(const TrackingParticle& trkPart, const TTTrack2& track, float& quality){
-
-    quality = (squaredNormDiff(trkPart.invPt   , track.invPt()   , resolution(track.invPt(),"invPt") ) +
-               squaredNormDiff(trkPart.phi0    , track.phi0()    , resolution(track.invPt(),"phi0") ) +
-               squaredNormDiff(trkPart.cottheta, track.cottheta(), resolution(track.invPt(),"cottheta") ) +
-               squaredNormDiff(trkPart.z0      , track.z0()      , resolution(track.invPt(),"z0") )
-              )/degrees_of_freedom;
-
+bool MCTruthAssociator::accept(const TrackingParticle& trkPart, const TTTrack2& track, float& quality) {
+    quality = squaredNormDiff(trkPart.invPt   , track.invPt()   , resolution(track.invPt(),"invPt")    ) +
+              squaredNormDiff(trkPart.phi0    , track.phi0()    , resolution(track.invPt(),"phi0")     ) +
+              squaredNormDiff(trkPart.cottheta, track.cottheta(), resolution(track.invPt(),"cottheta") ) +
+              squaredNormDiff(trkPart.z0      , track.z0()      , resolution(track.invPt(),"z0")       );
+    quality /= degrees_of_freedom;
     bool acc = quality < match_chi2_cut;
-
     return acc;
 }
 

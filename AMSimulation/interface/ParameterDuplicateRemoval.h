@@ -1,7 +1,8 @@
 #ifndef AMSimulation_ParameterDuplicateRemoval_h_
 #define AMSimulation_ParameterDuplicateRemoval_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
+#include <cassert>
 #include <vector>
 #include <TVector2.h>
 

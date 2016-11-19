@@ -9,7 +9,6 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/CombinationFactory.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/CombinationBuilderFactory.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PairCombinationFactory.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/GhostBuster.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/DuplicateRemoval.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ParameterDuplicateRemoval.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/MCTruthAssociator.h"
@@ -23,8 +22,7 @@ class TrackFitter {
     TrackFitter(const ProgramOption& po) :
       po_(po),
       nEvents_(po.maxEvents), verbose_(po.verbose),
-      prefixRoad_("AMTTRoads_"), prefixTrack_("AMTTTracks_"), suffix_(""),
-      combinationBuilderFactory_(std::make_shared<CombinationBuilderFactory>(po_.FiveOfSix)) {
+      prefixRoad_("AMTTRoads_"), prefixTrack_("AMTTTracks_"), suffix_("") {
 
         // Decide the track fitter to use
         fitter_ = 0;
@@ -39,6 +37,8 @@ class TrackFitter {
         } else {
             throw std::invalid_argument("unknown track fitter algo.");
         }
+
+        combinationBuilderFactory_ = std::make_shared<CombinationBuilderFactory>(po_.FiveOfSix);
     }
 
     // Destructor
@@ -69,15 +69,12 @@ class TrackFitter {
 
     // Combination factory
     CombinationFactory combinationFactory_;
-    
+
     // pair combination factory
     PairCombinationFactory pairCombinationFactory_;
 
     // SCB and ACB combination factory
     std::shared_ptr<CombinationBuilderFactory> combinationBuilderFactory_;
-
-    // Ghost buster
-    GhostBuster ghostBuster_;
 
     // MC truth associator
     MCTruthAssociator truthAssociator_;

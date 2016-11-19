@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         ("hitBits"      , po::value<unsigned>(&option.hitBits)->default_value(0), "Specify hit bits (0: all hit, 1: miss layer 1, ..., 6: miss layer 6)")
 
         // Only for track fitting
-        ("maxChi2"      , po::value<float>(&option.maxChi2)->default_value(5.), "Specify maximum reduced chi-squared")
+        ("maxChi2"      , po::value<float>(&option.maxChi2)->default_value(14.6), "Specify maximum reduced chi-squared")  // Marco De Mattia recommends 14.6 as a reasonable cut value
         ("CutPrincipals", po::bool_switch(&option.CutPrincipals)->default_value(false), "replace chi**2 cut with principals cut")
         ("minNdof"      , po::value<int>(&option.minNdof)->default_value(1), "Specify minimum degree of freedom")
         ("maxCombs"     , po::value<int>(&option.maxCombs)->default_value(999999999), "Specfiy max number of combinations per road")
