@@ -58,6 +58,11 @@ process.L1TrackTrigger_step=cms.Path(process.L1TrackTrigger_custom)
 process.p = cms.Path(process.ntupleSequence_TTI)
 process.schedule = cms.Schedule(process.L1TrackTrigger_step,process.p)
 
+# filter all path with the skim
+process.load("SLHCL1TrackTriggerSimulations.NTupleTools.simpleSkimmer_cfi")
+for path in process.paths:
+    getattr(process,path)._seq = process.simpleSkimmer * getattr(process,path)._seq
+
 
 # Configure framework report and summary
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))

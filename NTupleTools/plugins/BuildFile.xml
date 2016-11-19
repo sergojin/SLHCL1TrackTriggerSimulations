@@ -1,5 +1,10 @@
-<export>
-</export>
+<use   name="FWCore/Framework"/>
+<use   name="FWCore/PluginManager"/>
+<use   name="FWCore/ParameterSet"/>
+<use   name="FWCore/ServiceRegistry"/>
+<use   name="SimDataFormats/TrackingAnalysis"/>
+<use   name="CommonTools/UtilAlgos"/>
+
 <library   name="SLHCL1TrackTriggerSimulationsNTupleTools_plugins" file="*.cc">
-  <use   name="SLHCL1TrackTriggerSimulations/NTupleTools"/>
+  <flags EDM_PLUGIN="1"/>
 </library>
