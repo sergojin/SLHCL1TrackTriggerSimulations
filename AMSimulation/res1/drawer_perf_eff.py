@@ -2,23 +2,11 @@
 
 from rootdrawing import *
 from parser import *
-from ROOT import *
+from TrackParametersToTT import *
 
 col = TColor.GetColor("#BA0000")
 fcol = TColor.GetColor("#E58080")
 col_res = TColor.GetColor("#008000")
-
-#________ Tklayout cuts ________
-r_star = 58.9
-mPtFactor = 0.3*3.8*0.5*0.01
-phi_i = TMath.Pi()/4.
-phi_f = TMath.Pi()/2.
-eta_i = 0.
-eta_f = 0.733333
-z0_min = 7.
-
-def phi_star(phi_0, qbpT):
-    return phi_0 - TMath.ASin(mPtFactor*r_star*qbpT)
 
 
 # ______________________________________________________________________________
@@ -48,13 +36,19 @@ def drawer_book(options):
     histos[hname] = TEfficiency(hname, "; p_{T} [GeV]; %s" % ytitle, 100, 0., 10.)
 
     hname = prefix + "eta"
-    histos[hname] = TEfficiency(hname, "; #eta; %s" % ytitle,        100, 0., 0.74)
+    histos[hname] = TEfficiency(hname, "; #eta; %s" % ytitle,        70, -0.4, 1.)
+
+    hname = prefix + "etaStar"
+    histos[hname] = TEfficiency(hname, "; #eta*; %s" % ytitle,       70, -0.4, 1.)
 
     hname = prefix + "phi"
-    histos[hname] = TEfficiency(hname, "; #phi; %s" % ytitle,        100, 3.14/4., 3.14/2.)
+    histos[hname] = TEfficiency(hname, "; #phi; %s" % ytitle,        80, 0.4, 2.)
+
+    hname = prefix + "phiStar"
+    histos[hname] = TEfficiency(hname, "; #phi*; %s" % ytitle,       80, 0.4, 2.)
 
     hname = prefix + "vz"
-    histos[hname] = TEfficiency(hname, "; v_{z} [cm]; %s" % ytitle,  120, -30, 30)
+    histos[hname] = TEfficiency(hname, "; v_{z} [cm]; %s" % ytitle,  100, -30, 30)
 
     hname = prefix + "charge"
     histos[hname] = TEfficiency(hname, "; charge; %s" % ytitle,      5, -2.5, 2.5)
@@ -62,17 +56,14 @@ def drawer_book(options):
     prefix = "resolution_"
     xtitle = "p_{T} resolution / p_{T}"
 
-    hname = prefix + "pt"  # pt, for 15-100 GeV
-    histos[hname] = TH1F(hname, "; %s {15-100 GeV}" % xtitle, 100, -0.20, 0.20)
+    hname = prefix + "pt"  # pt, for 8-100 GeV
+    histos[hname] = TH1F(hname, "; %s {8-100 GeV}" % xtitle, 100, -0.20, 0.20)
 
-    hname = prefix + "ppt"  # pt, for 5-15 GeV
-    histos[hname] = TH1F(hname, "; %s {5-15 GeV}" % xtitle, 100, -0.20, 0.20)
-
-    hname = prefix + "pppt"  # pt, for 3-5 GeV
-    histos[hname] = TH1F(hname, "; %s {3-5 GeV}" % xtitle, 100, -0.20, 0.20)
+    hname = prefix + "ppt"  # pt, for 3-8 GeV
+    histos[hname] = TH1F(hname, "; %s {3-8 GeV}" % xtitle, 100, -0.20, 0.20)
 
     hname = prefix + "pt_vs_pt"
-    histos[hname] = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 40, -200, 200, 100, -0.20, 0.20)
+    histos[hname] = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 40, -100, 100, 100, -0.20, 0.20)
 
     hname = prefix + "pt_vs_eta"
     histos[hname] = TH2F(hname, "; #eta; p_{T} resolution/p_{T}", 40, 0, 0.8, 100, -0.20, 0.20)
@@ -85,7 +76,7 @@ def drawer_book(options):
         histos[prefix + "pppt"].SetBins(50, 0., 10.)
 
         prefix = "resolution_"
-        histos[prefix + "pt_vs_pt"]  = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 20, -200, 200, 100, -0.20, 0.20)
+        histos[prefix + "pt_vs_pt"]  = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 20, -100, 100, 100, -0.20, 0.20)
         histos[prefix + "pt_vs_eta"] = TH2F(hname, "; #eta; p_{T} resolution/p_{T}", 20, 0, 0.8, 100, -0.20, 0.20)
 
     if options.low_low_stat:
@@ -95,7 +86,7 @@ def drawer_book(options):
         histos[prefix + "pppt"].SetBins(20, 0., 10.)
 
         prefix = "resolution_"
-        histos[prefix + "pt_vs_pt"]  = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 10, -200, 200, 100, -0.20, 0.20)
+        histos[prefix + "pt_vs_pt"]  = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 10, -100, 100, 100, -0.20, 0.20)
         histos[prefix + "pt_vs_eta"] = TH2F(hname, "; #eta; p_{T} resolution/p_{T}", 10, 0, 0.8, 100, -0.20, 0.20)
 
     # Error statistics
@@ -128,22 +119,23 @@ def drawer_project(tree, histos, options):
     tree.SetBranchStatus("trkParts_vz"     , 1)
     tree.SetBranchStatus("trkParts_charge" , 1)
     tree.SetBranchStatus("trkParts_primary", 1)
+    tree.SetBranchStatus("trkParts_intime" , 1)
     tree.SetBranchStatus("trkParts_signal" , 1)
     tree.SetBranchStatus("trkParts_pdgId"  , 1)
-    #tree.SetBranchStatus("AMTTRoads_patternRef" , 1)
-    #tree.SetBranchStatus("AMTTRoads_stubRefs"   , 1)
-    #tree.SetBranchStatus("AMTTTracks_invPt"     , 1)
-    #tree.SetBranchStatus("AMTTTracks_phi0"      , 1)
-    #tree.SetBranchStatus("AMTTTracks_cottheta"  , 1)
-    #tree.SetBranchStatus("AMTTTracks_z0"        , 1)
-    tree.SetBranchStatus("AMTTTracks_pt"        , 1)
-    tree.SetBranchStatus("AMTTTracks_eta"       , 1)
-    tree.SetBranchStatus("AMTTTracks_chi2"      , 1)
-    tree.SetBranchStatus("AMTTTracks_ndof"      , 1)
-    tree.SetBranchStatus("AMTTTracks_synTpId"   , 1)
-    tree.SetBranchStatus("AMTTTracks_tpId"      , 1)
-    tree.SetBranchStatus("AMTTTracks_patternRef", 1)
-    tree.SetBranchStatus("AMTTTracks_stubRefs"  , 1)
+    #tree.SetBranchStatus("AMTTRoads_patternRef"  , 1)
+    #tree.SetBranchStatus("AMTTRoads_stubRefs"    , 1)
+    #tree.SetBranchStatus("AMTTTracks_invPt"      , 1)
+    #tree.SetBranchStatus("AMTTTracks_phi0"       , 1)
+    #tree.SetBranchStatus("AMTTTracks_cottheta"   , 1)
+    #tree.SetBranchStatus("AMTTTracks_z0"         , 1)
+    tree.SetBranchStatus("AMTTTracks_pt"         , 1)
+    tree.SetBranchStatus("AMTTTracks_eta"        , 1)
+    #tree.SetBranchStatus("AMTTTracks_chi2"       , 1)
+    #tree.SetBranchStatus("AMTTTracks_ndof"       , 1)
+    tree.SetBranchStatus("AMTTTracks_synMatchCat", 1)
+    tree.SetBranchStatus("AMTTTracks_synTpId"    , 1)
+    tree.SetBranchStatus("AMTTTracks_patternRef" , 1)
+    #tree.SetBranchStatus("AMTTTracks_stubRefs"   , 1)
 
     # Loop over events
     numEntries, denomEntries = 0, 0
@@ -153,6 +145,7 @@ def drawer_project(tree, histos, options):
 
         if (ievt % 100 == 0):  print "Processing event: %i" % ievt
 
+        # Loop over tracking particles
         nparts_all = evt.trkParts_primary.size()
         trkparts = {}
 
@@ -163,9 +156,10 @@ def drawer_project(tree, histos, options):
 
             charge  = evt.trkParts_charge [ipart]
             primary = evt.trkParts_primary[ipart]
+            intime  = evt.trkParts_intime [ipart]
             signal  = evt.trkParts_signal [ipart]
 
-            if not (charge!=0 and primary):
+            if not (charge!=0 and primary and intime):
                 continue
 
             if options.signal and not signal:
@@ -179,23 +173,14 @@ def drawer_project(tree, histos, options):
             vz      = evt.trkParts_vz     [ipart]
             pdgId   = evt.trkParts_pdgId  [ipart]
 
-            #____ Including pT cut from option ____
-            if pt < options.ptmin:
-                continue
-
-	    #_______ Tklayout cuts ________
-            q_over_Pt = charge/pt
-            if phi_star(phi, q_over_Pt) < phi_i or phi_star(phi, q_over_Pt) > phi_f:
-               continue
-            if eta < eta_i or eta > eta_f:
-               continue
-	    if fabs(vz) > z0_min:
-	       continue
+            #aux_TT = TrackParametersToTT(phi, float(charge)/pt , eta, vz)
+            #if aux_TT != options.tower:
+            #    continue
 
             trkparts[ipart] = (pt, eta, phi, vz, charge, pdgId)
             if options.verbose:  print ievt, "part ", ipart, trkparts[ipart]
 
-
+        # Loop over reconstructed tracks
         ntracks_all = evt.AMTTTracks_patternRef.size()
         trkparts_trigger = {}
         trkparts_trigger_vars = {}
@@ -203,76 +188,84 @@ def drawer_project(tree, histos, options):
         for itrack in xrange(ntracks_all):
             trigger = False
 
-            synTpId  = evt.AMTTTracks_synTpId[itrack]
-            if synTpId == 1:
+            synMatchCat = evt.AMTTTracks_synMatchCat[itrack]
+            synTpId     = evt.AMTTTracks_synTpId    [itrack]
+            if synMatchCat == 1:
                 trigger = True
 
-            patternRef = evt.AMTTTracks_patternRef[itrack]
-            if not (patternRef < options.npatterns):
+            patternRef  = evt.AMTTTracks_patternRef [itrack]
+            if not (patternRef < options.maxPatterns):
                 trigger = False
 
-            chi2     = evt.AMTTTracks_chi2[itrack]
-            ndof     = evt.AMTTTracks_ndof[itrack]
-            chi2Red  = chi2/ndof
-
-            if not (chi2Red < options.maxChi2):
-                trigger = False
-
-            track_pt   = evt.AMTTTracks_pt      [itrack]
-            track_eta  = evt.AMTTTracks_eta     [itrack]
+            track_pt    = evt.AMTTTracks_pt         [itrack]
+            track_eta   = evt.AMTTTracks_eta        [itrack]
+            #track_chi2  = evt.AMTTTracks_chi2       [itrack]
+            #track_ndof  = evt.AMTTTracks_ndof       [itrack]
 
             if trigger:
-		tpId = evt.AMTTTracks_tpId[itrack]
-                trkparts_trigger[tpId] = True
-                trkparts_trigger_vars[tpId] = (track_pt, track_eta)
+                trkparts_trigger[synTpId] = True
+                trkparts_trigger_vars[synTpId] = (track_pt, track_eta)
 
-                if options.verbose and (tpId in trkparts):  print ievt, "track", itrack, track_pt, track_eta, repr_cppvector(evt.AMTTTracks_stubRefs[itrack])
+            if options.verbose > 1:  print ievt, "track", itrack, track_pt, track_eta, synMatchCat, synTpId
+            if options.verbose and trigger:  print ievt, "good track", itrack, track_pt, track_eta, synMatchCat, synTpId
 
         #for k, v in trkparts_trigger.iteritems():
         #    assert k in trkparts
 
         # ______________________________________________________________________
-        # N-1 conditions
+        # Fill the histograms
+
+        if options.verbose > 2: print "trigger tower", options.ptmin, options.ptmax, options.phimin, options.phimax, options.etamin, options.etamax, options.vzmin, options.vzmax
 
         for k, v in trkparts.iteritems():
             pt, eta, phi, vz, charge, pdgId = v
+            phiStar = get_phiStar_from_phi(phi, float(charge)/pt)
+            etaStar = get_etaStar_from_eta(eta, vz, float(charge)/pt)
+
+            # Trigger has fired for this tracking particle
             trigger = k in trkparts_trigger
 
+            if options.verbose:  print ievt, "part ", k, v, phiStar, etaStar, trigger
+
+            # Check N-1 conditions
             prefix = "efficiency_"
-            if options.etamin < eta < options.etamax and options.phimin < phi < options.phimax:
+            if options.phimin < phiStar < options.phimax and options.etamin < etaStar < options.etamax and options.vzmin < vz < options.vzmax:
                 histos[prefix + "pt"      ].Fill(trigger, pt)
                 histos[prefix + "ppt"     ].Fill(trigger, pt)
                 histos[prefix + "pppt"    ].Fill(trigger, pt)
+            if options.ptmin < pt < options.ptmax and options.phimin < phiStar < options.phimax and options.vzmin < vz < options.vzmax:
+                histos[prefix + "eta"     ].Fill(trigger, eta)
+                histos[prefix + "etaStar" ].Fill(trigger, etaStar)
+            if options.ptmin < pt < options.ptmax and options.etamin < etaStar < options.etamax and options.vzmin < vz < options.vzmax:
+                histos[prefix + "phi"     ].Fill(trigger, phi)
+                histos[prefix + "phiStar" ].Fill(trigger, phiStar)
+            if options.ptmin < pt < options.ptmax and options.phimin < phiStar < options.phimax and options.etamin < etaStar < options.etamax:
+                histos[prefix + "vz"      ].Fill(trigger, vz)
+            if options.ptmin < pt < options.ptmax and options.phimin < phiStar < options.phimax and options.etamin < etaStar < options.etamax and options.vzmin < vz < options.vzmax:
+                histos[prefix + "charge"  ].Fill(trigger, charge)
                 denomEntries += 1
                 if trigger:  numEntries += 1
-            if options.ptmin < pt < options.ptmax and options.phimin < phi < options.phimax:
-                histos[prefix + "eta"     ].Fill(trigger, eta)
-            if options.ptmin < pt < options.ptmax and options.etamin < eta < options.etamax:
-                histos[prefix + "phi"     ].Fill(trigger, phi)
-            if options.ptmin < pt < options.ptmax and options.etamin < eta < options.etamax and options.phimin < phi < options.phimax:
-                histos[prefix + "vz"      ].Fill(trigger, vz)
-                histos[prefix + "charge"  ].Fill(trigger, charge)
 
+            # If trigger, also find pT resolution
             if trigger:
                 track_pt, track_eta = trkparts_trigger_vars[k]
 
                 prefix = "resolution_"
-                if options.etamin < eta < options.etamax and options.phimin < phi < options.phimax:
+                if options.phimin < phiStar < options.phimax and options.etamin < etaStar < options.etamax and options.vzmin < vz < options.vzmax:
                     ptres = (track_pt - pt) / pt
-                    if 15 < pt < 100:
-                        histos[prefix + "pt"      ].Fill(ptres)
-                    if 5 < pt < 15:
-                        histos[prefix + "ppt"     ].Fill(ptres)
-                    if 3 < pt < 5:
-                        histos[prefix + "pppt"    ].Fill(ptres)
-
                     histos[prefix + "pt_vs_pt"].Fill(charge*pt, ptres)
+                    if 8 < pt < 100:
+                        histos[prefix + "pt"      ].Fill(ptres)
+                    if 3 < pt < 8:
+                        histos[prefix + "ppt"     ].Fill(ptres)
 
-                if options.ptmin < pt < options.ptmax and options.phimin < phi < options.phimax:
+                if options.ptmin < pt < options.ptmax and options.phimin < phiStar < options.phimax and options.vzmin < vz < options.vzmax:
                     ptres = (track_pt - pt) / pt
                     histos[prefix + "pt_vs_eta"].Fill(eta, ptres)
 
+        if options.verbose:  print ievt, numEntries, denomEntries
 
+    # Bookkeeping
     prefix = "efficiency_"
     histos[prefix + "pt"      ].numEntries = numEntries
     histos[prefix + "pt"      ].denomEntries = denomEntries
@@ -284,7 +277,7 @@ def drawer_draw(histos, options):
     def displayGaus(h, ignorebins=0, scalebox=(1.,1.)):
         # Display gaussian fit parameters
         fitxmin, fitxmax = h.GetBinCenter(ignorebins+1), h.GetBinCenter(h.GetNbinsX()-1-ignorebins+1)
-        r = h.Fit("gaus", "INS", "", fitxmin, fitxmax)
+        r = h.Fit("gaus", "INSQ", "", fitxmin, fitxmax)
         p1, e1, p2, e2 = r.Parameter(1), r.ParError(1), r.Parameter(2), r.ParError(2)
 
         gPad.Modified(); gPad.Update()
@@ -307,31 +300,40 @@ def drawer_draw(histos, options):
         #gPad.Modified(); gPad.Update()
         ps.Draw()
 
+    tline.SetLineStyle(1)
+    tline2 = TLine()
+    tline2.SetLineColor(4)
+    tline2.SetLineWidth(2)
+    tline2.SetLineStyle(2)
 
     for hname, h in histos.iteritems():
-
-        h.additional = []
         if h.ClassName() == "TEfficiency":
-            ymax = 1.2
-
+            ymin, ymax = 0., 1.2
             h1 = h.GetCopyTotalHisto(); h1.SetName(h1.GetName()+"_frame"); h1.Reset()
-            h1.SetMinimum(0); h1.SetMaximum(ymax)
+            h1.SetMinimum(ymin); h1.SetMaximum(ymax)
             h1.SetStats(0); h1.Draw()
 
-            # Reference lines for 0.9, 0.95 and 1.0
             xmin, xmax = h1.GetXaxis().GetXmin(), h1.GetXaxis().GetXmax()
-            for y in [0.5, 0.8, 0.9, 0.95, 1.0]:
-                tline.DrawLine(xmin, y, xmax, y)
+            tline.DrawLine(xmin, 1.0, xmax, 1.0)
+            if hname.endswith("pt"):
+                tline2.DrawLine(options.ptmin, ymin, options.ptmin, ymax)
+            elif hname.endswith("phi") or hname.endswith("phiStar"):
+                tline2.DrawLine(options.phimin, ymin, options.phimin, ymax)
+                tline2.DrawLine(options.phimax, ymin, options.phimax, ymax)
+            elif hname.endswith("eta") or hname.endswith("etaStar"):
+                tline2.DrawLine(options.etamin, ymin, options.etamin, ymax)
+                tline2.DrawLine(options.etamax, ymin, options.etamax, ymax)
+            elif hname.endswith("vz"):
+                tline2.DrawLine(options.vzmin, ymin, options.vzmin, ymax)
+                tline2.DrawLine(options.vzmax, ymin, options.vzmax, ymax)
 
             h.gr = h.CreateGraph()
             h.gr.Draw("p")
 
-            h.additional += [h.GetCopyPassedHisto(), h.GetCopyTotalHisto()]
-
         elif h.ClassName() == "TH1F":
             ymax = h.GetMaximum() * 1.4
             h.SetMinimum(0); h.SetMaximum(ymax)
-
+            h.SetLineColor(col_res); h.SetFillStyle(0)
             h.Draw("hist")
             displayGaus(h, ignorebins=10)
 
@@ -361,7 +363,7 @@ def drawer_draw(histos, options):
 
                 assert(hpy.GetNbinsX() > 20)
                 fitxmin, fitxmax = hpy.GetBinCenter(10+1), hpy.GetBinCenter(hpy.GetNbinsX()-1-10+1)
-                r = hpy.Fit("gaus", "INS", "", fitxmin, fitxmax)
+                r = hpy.Fit("gaus", "INSQ", "", fitxmin, fitxmax)
                 p1, e1, p2, e2 = r.Parameter(1), r.ParError(1), r.Parameter(2), r.ParError(2)
                 gr1.SetPoint(ibin, x, p1)
                 gr1.SetPointError(ibin, 0, 0, e1, e1)
@@ -375,17 +377,17 @@ def drawer_draw(histos, options):
             gr2.Draw("p")
 
         CMS_label()
-        save(options.outdir, "%s_%s" % (hname, options.ss), dot_root=True, additional=h.additional)
+        save(options.outdir, "%s_%s" % (hname, options.ss), dot_root=True)
     return
 
 
 def drawer_sitrep(histos, options):
     print "--- SITREP ---------------------------------------------------------"
-    print "--- Using tt{0}, pu{1}, ss={2}, npatterns={3}".format(options.tower, options.pu, options.ss, options.npatterns)
+    print "--- Using tt{0}, pu{1}, ss={2}, maxPatterns={3}".format(options.tower, options.pu, options.ss, options.maxPatterns)
 
     prefix = "efficiency_"
     h = histos[prefix + "pt"]
-    print "eff={0}/{1}={2:.3f}".format(h.numEntries, h.denomEntries, float(h.numEntries)/h.denomEntries)
+    print "eff={0}/{1}={2:.5f} +/- {3:.5f}".format(h.numEntries, h.denomEntries, float(h.numEntries)/h.denomEntries, (1./h.denomEntries) * sqrt(float(h.numEntries) * (1. - float(h.numEntries)/h.denomEntries)))
 
 
 # ______________________________________________________________________________
@@ -399,6 +401,8 @@ def main(options):
 
     gStyle.SetNdivisions(510, "Y")
     gStyle.SetEndErrorSize(0)
+    gStyle.SetPadGridX(True)
+    gStyle.SetPadGridY(True)
     use_TEfficiency()
 
     # Process
@@ -418,11 +422,9 @@ if __name__ == '__main__':
     add_drawer_arguments(parser)
 
     # Add more arguments
-    parser.add_argument("ss", help="short name of superstrip definition (e.g. ss256)")
-    parser.add_argument("npatterns", type=int, help="number of patterns to reach the desired coverage")
-    parser.add_argument("--coverage", type=float, default=0.95, help="desired coverage (default: %(default)s)")
+    parser.add_argument("ss", help="short name of superstrip definition (e.g. sf1_nz8)")
+    parser.add_argument("--maxPatterns", type=int, default=999999999, help="number of patterns to reach the desired coverage")
     parser.add_argument("--minPt", type=float, default=3, help="min pT for gen particle (default: %(default)s)")
-    parser.add_argument("--maxChi2", type=float, default=5, help="max reduced chi-squared (default: %(default)s)")
     parser.add_argument("--low-stat", action="store_true", help="low statistics (default: %(default)s)")
     parser.add_argument("--low-low-stat", action="store_true", help="low low statistics (default: %(default)s)")
 
