@@ -1,10 +1,13 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternMerging.h"
 
 #include <cassert>
-#include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
+#include <iomanip>
+
+#include "TH1F.h"
+
 
 using namespace slhcl1tt;
 
@@ -17,19 +20,18 @@ namespace {
 }  // namespace
 
 
-PatternMerging::PatternMerging() : verbose_(1) {}
-
-PatternMerging::~PatternMerging() {}
-
 // _____________________________________________________________________________
-void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, float targetCoverage) const {
+int PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, float targetCoverage) const {
 
   //const unsigned deltaN         = 36000;  // search window (0 = all)
   //const float    targetCoverage = 0.95;   // get patterns until coverage >= targetCoverage
-  const unsigned maxPatterns    = 0;      // maximum number of patterns to read from bank (0 = all)
-  const unsigned maxTrials      = 0;      // number of patterns to process (0 = all)
+  //const unsigned maxPatterns    = 0;      // maximum number of patterns to read from bank (0 = all)
+  //const unsigned maxTrials      = 0;      // number of patterns to process (0 = all)
   //const bool     randomize      = false;  // random sampling of patterns
   const int      nInfo          = 1000;   // interval for printed info
+
+  const unsigned maxPatterns = (po_.maxPatterns >= 999999999) ? 0 : po_.maxPatterns;
+  const unsigned maxTrials   = (nEvents_ >= 999999999) ? 0 : nEvents_;
 
   // Book histograms
 
@@ -42,6 +44,10 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
   TH1F * hDeltaSS   = new TH1F("DeltaSS", "DeltaSS", 2001, -1000.5, +1000.5);
   TH1F * hDeltaN    = new TH1F("DeltaN", "DeltaN", 100, 0., -1.);  // automatic range
   TH1F * hDeltaPhi  = new TH1F("DeltaPhi", "DeltaPhi", 100, 0., -1.);  // automatic range
+
+  if (verbose_) {
+    std::cout << "Using deltaN: " << deltaN << " targetCoverage: " << targetCoverage << " maxPatterns: " << maxPatterns << std::endl;
+  }
 
 
   // ___________________________________________________________________________
@@ -79,7 +85,7 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
 
   if (maxPatterns) npatterns = maxPatterns;
 
-  std::vector<Pattern> patternList; // save all patterns
+  std::vector<PMPattern> patternList; // save all patterns
   patternList.reserve(npatterns);
 
   unsigned totalFrequency = 0; // accumulate sum frequency
@@ -116,7 +122,7 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
 
     // Prepare temp pattern
 
-    Pattern tempPattern;
+    PMPattern tempPattern;
     tempPattern.superstripIds  = *(pbreader.pb_superstripIds);
     tempPattern.frequency      = pbreader.pb_frequency;
     //tempPattern.invPt_mean     = pbreader.pb_invPt_mean;
@@ -175,11 +181,11 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
 
   if (verbose_) std::cout << "Cloning patternList..." << std::endl;
 
-  std::vector<Pattern> clonePatternList = patternList; // clone all patterns
+  std::vector<PMPattern> clonePatternList = patternList; // clone all patterns
 
   if (verbose_) std::cout << "Sorting clonePatternList by phi..." << std::endl;
 
-  std::sort(clonePatternList.begin(), clonePatternList.end(), [](const Pattern& a, const Pattern& b) {
+  std::sort(clonePatternList.begin(), clonePatternList.end(), [](const PMPattern& a, const PMPattern& b) {
     return a.phi_mean < b.phi_mean;  // sort patterns by smaller phi first
   });
 
@@ -250,7 +256,7 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
 
     // find siblings for this pattern patternList[ip] in the search range
 
-    std::vector<Sibling> siblings;
+    std::vector<PMSibling> siblings;
 
     // iq points into phi ordered list clonePatternList[iq]
 
@@ -277,7 +283,7 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
 
         // construct a sibling
         if (abs(deltass) == 1 || abs(deltass) == magicNumber) {
-          Sibling sib;
+          PMSibling sib;
           //sib.patternInd = ip;
           //sib.siblingInd = clonePatternList[iq].index;
           sib.index      = clonePatternList[iq].index;
@@ -367,8 +373,8 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
   // Release memory
 
   {
-    std::vector<Pattern>().swap(patternList);
-    std::vector<Pattern>().swap(clonePatternList);
+    std::vector<PMPattern>().swap(patternList);
+    std::vector<PMPattern>().swap(clonePatternList);
     std::map<std::vector<unsigned>, unsigned>().swap(patternMap);
   }
 
@@ -439,13 +445,14 @@ void PatternMerging::mergePatterns(TString src, TString out, unsigned deltaN, fl
   if (verbose_) std::cout << "Wrote " << out << std::endl;
 
   std::cout << "The End" << std::endl;
+  return 0;
 }
 
 // _____________________________________________________________________________
 void PatternMerging::selectSiblings(
     unsigned patternInd,
-    const std::vector<Sibling>& siblings,
-    const std::vector<Pattern>& patternList,
+    const std::vector<PMSibling>& siblings,
+    const std::vector<PMPattern>& patternList,
     const std::vector<bool>& merged,
     const std::map<std::vector<unsigned>, unsigned>& patternMap,
     std::vector<unsigned>& selectedSiblings,
@@ -642,4 +649,20 @@ void PatternMerging::selectSiblings(
   } // end loop on is1
 
   return;
+}
+
+
+// _____________________________________________________________________________
+// Main driver
+int PatternMerging::run() {
+    int exitcode = 0;
+    Timing(1);
+
+    unsigned deltaN = 80000;
+    float targetCoverage = 1.00;
+    exitcode = mergePatterns(po_.input, po_.output, deltaN, targetCoverage);
+    if (exitcode)  return exitcode;
+    Timing();
+
+    return exitcode;
 }

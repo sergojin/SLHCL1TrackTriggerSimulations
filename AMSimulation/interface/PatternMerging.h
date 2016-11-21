@@ -1,29 +1,26 @@
 #ifndef AMSimulation_PatternMerging_h_
 #define AMSimulation_PatternMerging_h_
 
-#include <vector>
-#include <map>
-#include <unordered_set>
-
-#include "TString.h"
-#include "TH1F.h"
-
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankWriter.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 using namespace slhcl1tt;
-
 
 // Codes originally written by Luciano Ristori (FNAL) and developed by
 // Roberto Rossin (Florida, now Padova)
 // Modified for inclusion into AMSimulation
 
+
 class PatternMerging {
 public:
   typedef PatternBankReaderT<kPatternMerging> PatternBankReader;
+  //typedef PatternBankWriterT<kPatternMerging> PatternBankWriter;
 
   // ___________________________________________________________________________
   // Sibling
 
-  struct Sibling {
+  struct PMSibling {
     //unsigned patternInd;
     //unsigned siblingInd;
     unsigned index;  // siblingInd
@@ -35,7 +32,7 @@ public:
   // ___________________________________________________________________________
   // Pattern
 
-  struct Pattern {
+  struct PMPattern {
     // pattern proper (vector of superstrips)
     std::vector<unsigned> superstripIds;
 
@@ -60,7 +57,7 @@ public:
     // In case of success returns true and assigns layer number and delta
     // where delta is the distance of non-matching superstrip
     // layer and delta are undefined in case of false
-    bool isSibling(const Pattern& p, int& layer, int& delta) const {
+    bool isSibling(const PMPattern& p, int& layer, int& delta) const {
       int nDiff = 0;
       for (int i = 0; i < nLayers && nDiff <= 1; ++i) {
         if (superstripIds[i] != p.superstripIds[i]) {
@@ -77,15 +74,23 @@ public:
   // ___________________________________________________________________________
   // PatternMerging
 
-  PatternMerging();
-  ~PatternMerging();
+  // Constructor
+  PatternMerging(const ProgramOption& po) :
+      po_(po),
+      nEvents_(po.maxEvents), verbose_(po.verbose) {}
 
-  void mergePatterns(TString src, TString out, unsigned deltaN=36000, float targetCoverage=0.95) const;
+  // Destructor
+  ~PatternMerging() {}
+
+  // Main driver
+  int run();
+
+  int mergePatterns(TString src, TString out, unsigned deltaN, float targetCoverage) const;
 
   void selectSiblings(
       unsigned patternInd,
-      const std::vector<Sibling>& siblings,
-      const std::vector<Pattern>& patternList,
+      const std::vector<PMSibling>& siblings,
+      const std::vector<PMPattern>& patternList,
       const std::vector<bool>& merged,
       const std::map<std::vector<unsigned>, unsigned>& patternMap,
       std::vector<unsigned>& selectedSiblings,
@@ -95,6 +100,9 @@ public:
 private:
   static const int nLayers = 6;
 
+  // Program options
+  const ProgramOption po_;
+  long long nEvents_;
   int verbose_;
 };
 

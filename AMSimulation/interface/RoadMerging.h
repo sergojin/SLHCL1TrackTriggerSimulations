@@ -1,19 +1,16 @@
-#ifndef AMSimulation_PatternMerging_h_
-#define AMSimulation_PatternMerging_h_
-
-#include <vector>
-#include <map>
-
-#include "TString.h"
+#ifndef AMSimulation_RoadMerging_h_
+#define AMSimulation_RoadMerging_h_
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackWriter.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 using namespace slhcl1tt;
-
 
 // Codes originally written by Roberto Rossin (Florida, now Padova)
 // Modified for inclusion into AMSimulation
+
 
 class RoadMerging {
 public:
@@ -24,7 +21,7 @@ public:
   // ___________________________________________________________________________
   // TTRoad
 
-  struct TTRoad {
+  struct RMTTRoad {
     unsigned patternRef;
     unsigned tower;
     unsigned nstubs;
@@ -40,7 +37,7 @@ public:
   // ___________________________________________________________________________
   // Pattern
 
-  struct Pattern {
+  struct RMPattern {
     // pattern proper (vector of superstrips)
     std::vector<unsigned> superstripIds;
 
@@ -73,21 +70,32 @@ public:
   // ___________________________________________________________________________
   // RoadMerging
 
-  RoadMerging();
-  ~RoadMerging();
+  // Constructor
+  RoadMerging(const ProgramOption& po) :
+      po_(po),
+      nEvents_(po.maxEvents), verbose_(po.verbose) {}
 
-  void process(TString bank, TString src, TString out) const;  //TODO: factor out this guy
+  // Destructor
+  ~RoadMerging() {}
+
+  // Main driver
+  int run();
+
+  int processEvents(TString bank, TString src, TString out, float targetCoverage) const;
 
   void mergeRoads(
-      const std::vector<Pattern>& patterns,
-      const std::vector<Pattern>& merged_patterns,
-      const std::vector<TTRoad>& roads,
-      std::vector<TTRoad>& merged_roads
+      const std::vector<RMPattern>& patterns,
+      const std::vector<RMPattern>& merged_patterns,
+      const std::vector<RMTTRoad>& roads,
+      std::vector<RMTTRoad>& merged_roads
   ) const;
 
 private:
   static const int nLayers = 6;
 
+  // Program options
+  const ProgramOption po_;
+  long long nEvents_;
   int verbose_;
 };
 

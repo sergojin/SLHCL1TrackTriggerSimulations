@@ -1,10 +1,10 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/RoadMerging.h"
 
 #include <cassert>
-#include <iostream>
-#include <iomanip>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
+#include <iomanip>
 
 using namespace slhcl1tt;
 
@@ -17,14 +17,14 @@ namespace {
 }  // namespace
 
 
-RoadMerging::RoadMerging() : verbose_(1) {}
-
-RoadMerging::~RoadMerging() {}
-
 // _____________________________________________________________________________
-void RoadMerging::process(TString bank, TString src, TString out) const {
+int RoadMerging::processEvents(TString bank, TString src, TString out, float targetCoverage) const {
 
-  float targetCoverage = 0.95;
+  const unsigned maxPatterns = (po_.maxPatterns >= 999999999) ? 0 : po_.maxPatterns;
+
+  if (verbose_) {
+    std::cout << "Using targetCoverage: " << targetCoverage << " maxPatterns: " << maxPatterns << std::endl;
+  }
 
   // ___________________________________________________________________________
   // For reading pattern bank
@@ -51,10 +51,6 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
   TTRoadReader reader(verbose_);
   reader.init(src);
 
-  // Get number of events
-  unsigned nentries = 4294967295;  // std::numeric_limits<unsigned>::max()
-
-
   // ___________________________________________________________________________
   // For writing
 
@@ -78,8 +74,12 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
   // ___________________________________________________________________________
   // Load patterns
 
-  std::vector<Pattern> patterns;
-  std::vector<Pattern> merged_patterns;
+  if (verbose_) std::cout << "Loading patterns..." << std::endl;
+
+  if (maxPatterns) npatterns = maxPatterns;
+
+  std::vector<RMPattern> patterns;
+  std::vector<RMPattern> merged_patterns;
 
   unsigned totalFrequency = 0; // accumulate sum frequency
   float newCoverage = 0.;      // running coverage
@@ -102,7 +102,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
     if (verbose_ && ipatt%200000 == 0)  std::cout << ".. Loading pattern: " << ipatt << " freq: " << pbreader.pb_frequency << " cov: " << newCoverage << std::endl;
 
     // Prepare temp pattern
-    Pattern tempPattern;
+    RMPattern tempPattern;
     tempPattern.superstripIds  = *(pbreader.pb_superstripIds);
     tempPattern.frequency      = pbreader.pb_frequency;
     tempPattern.invPt_mean     = pbreader.pb_invPt_mean;
@@ -129,7 +129,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
     const std::vector<unsigned>& indFromMergedTemp = *(pbreader.pb_indFromMerged);
 
     // Clone a temp pattern, update only the following variables
-    Pattern tempPattern;
+    RMPattern tempPattern;
     tempPattern.superstripIds  = patterns.at(indFromMergedTemp.front()).superstripIds;
     tempPattern.frequency      = 0;
     tempPattern.invPt_mean     = 0.;
@@ -177,7 +177,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
   if (verbose_)  std::cout << "Sorting merged pattern bank by frequency ..." << std::endl;
 
   // Sort merged_patterns by frequency
-  std::stable_sort(merged_patterns.begin(), merged_patterns.end(), [](const Pattern& lhs, const Pattern& rhs) {
+  std::stable_sort(merged_patterns.begin(), merged_patterns.end(), [](const RMPattern& lhs, const RMPattern& rhs) {
     return (lhs.frequency >= rhs.frequency);  // higher frequency first
   });
 
@@ -186,7 +186,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
   stoppingPatternInd = 0;  // num of patterns to reach targetCoverage
 
   for (unsigned jpatt = 0; jpatt < nmpatterns; ++jpatt) {  // index: merged pattern
-    const Pattern& tempPattern = merged_patterns.at(jpatt);
+    const RMPattern& tempPattern = merged_patterns.at(jpatt);
 
     // Accumulate frequency
     totalFrequency += tempPattern.frequency;
@@ -221,10 +221,10 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
   // ___________________________________________________________________________
   // Loop over events
 
-  std::vector<TTRoad> roads;
-  std::vector<TTRoad> merged_roads;
+  std::vector<RMTTRoad> roads;
+  std::vector<RMTTRoad> merged_roads;
 
-  for (Long64_t ievt = 0; ievt < nentries; ++ievt) {
+  for (long long ievt = 0; ievt < nEvents_; ++ievt) {
     if (reader.loadTree(ievt) < 0)  break;
     reader.getEntry(ievt);
 
@@ -240,7 +240,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
       //if (verbose_)  std::cout << ".... Processing road: " << iroad << std::endl;
 
       // Reconstruct the road
-      TTRoad aroad;
+      RMTTRoad aroad;
       aroad.patternRef          = reader.vr_patternRef->at(iroad);
       aroad.tower               = reader.vr_tower->at(iroad);
       aroad.nstubs              = reader.vr_nstubs->at(iroad);
@@ -255,7 +255,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
     assert(roads.size() == nroads);
 
     // Sort roads by pT
-    //std::stable_sort(roads.begin(), roads.end(), [](const TTRoad& lhs, const TTRoad& rhs) {
+    //std::stable_sort(roads.begin(), roads.end(), [](const RMTTRoad& lhs, const RMTTRoad& rhs) {
     //  return (std::abs(lhs.patternInvPt) < std::abs(rhs.patternInvPt));  // higher pT first
     //});
 
@@ -263,7 +263,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
     mergeRoads(patterns, merged_patterns, roads, merged_roads);
 
     // Sort merged_roads by pT
-    std::stable_sort(merged_roads.begin(), merged_roads.end(), [](const TTRoad& lhs, const TTRoad& rhs) {
+    std::stable_sort(merged_roads.begin(), merged_roads.end(), [](const RMTTRoad& lhs, const RMTTRoad& rhs) {
       return (std::abs(lhs.patternInvPt) < std::abs(rhs.patternInvPt));  // higher pT first
     });
 
@@ -284,7 +284,7 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
     vr_superstripIdsUnited.clear();
 
     for (unsigned jroad=0; jroad<nmroads; ++jroad) {
-      const TTRoad& amroad = merged_roads.at(jroad);
+      const RMTTRoad& amroad = merged_roads.at(jroad);
       assert(amroad.superstripIdsUnited.size() > 0);
 
       vr_patternRef         .emplace_back(amroad.patternRef         );
@@ -313,24 +313,26 @@ void RoadMerging::process(TString bank, TString src, TString out) const {
 
   // Write out
   writer.write();
+
+  return 0;
 }
 
 // _____________________________________________________________________________
 void RoadMerging::mergeRoads(
-    const std::vector<Pattern>& patterns,
-    const std::vector<Pattern>& merged_patterns,
-    const std::vector<TTRoad>& roads,
-    std::vector<TTRoad>& merged_roads
+    const std::vector<RMPattern>& patterns,
+    const std::vector<RMPattern>& merged_patterns,
+    const std::vector<RMTTRoad>& roads,
+    std::vector<RMTTRoad>& merged_roads
 ) const {
 
-  std::map<unsigned, TTRoad> awesome_map;
+  std::map<unsigned, RMTTRoad> awesome_map;
 
   const unsigned nroads = roads.size();
 
   //unsigned stoppingPatternInd = merged_patterns.size();
 
   for (unsigned iroad=0; iroad<nroads; ++iroad) {
-    const TTRoad& aroad = roads.at(iroad);
+    const RMTTRoad& aroad = roads.at(iroad);
 
     unsigned patternRef       = aroad.patternRef;
     unsigned mergedPatternRef = patterns.at(patternRef).indToMerged;
@@ -338,7 +340,7 @@ void RoadMerging::mergeRoads(
     //if (mergedPatternRef >= stoppingPatternInd)
     //  continue;
 
-    std::pair<std::map<unsigned, TTRoad>::iterator, bool> ins = awesome_map.insert(std::make_pair(mergedPatternRef, aroad));
+    std::pair<std::map<unsigned, RMTTRoad>::iterator, bool> ins = awesome_map.insert(std::make_pair(mergedPatternRef, aroad));
 
     if (ins.second) {  // insert success
       // the first road with this mergedPatternRef
@@ -382,10 +384,26 @@ void RoadMerging::mergeRoads(
     }
   }
 
-  std::map<unsigned, TTRoad>::const_iterator awesome_map_it  = awesome_map.begin();
-  std::map<unsigned, TTRoad>::const_iterator awesome_map_end = awesome_map.end();
+  std::map<unsigned, RMTTRoad>::const_iterator awesome_map_it  = awesome_map.begin();
+  std::map<unsigned, RMTTRoad>::const_iterator awesome_map_end = awesome_map.end();
 
   for (; awesome_map_it != awesome_map_end; ++awesome_map_it) {
     merged_roads.push_back(awesome_map_it->second);
   }
+  return;
+}
+
+
+// _____________________________________________________________________________
+// Main driver
+int RoadMerging::run() {
+    int exitcode = 0;
+    Timing(1);
+
+    float targetCoverage = 0.95;
+    exitcode = processEvents(po_.bankfile, po_.input, po_.output, targetCoverage);
+    if (exitcode)  return exitcode;
+    Timing();
+
+    return exitcode;
 }

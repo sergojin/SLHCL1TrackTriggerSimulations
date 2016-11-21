@@ -11,6 +11,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "TROOT.h"  // for gROOT
 #include "TString.h"
