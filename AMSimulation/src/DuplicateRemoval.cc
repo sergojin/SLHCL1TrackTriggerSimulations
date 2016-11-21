@@ -13,7 +13,10 @@ namespace {
   }
 
   bool sortByChi2(const TTTrack2& ltk, const TTTrack2& rtk) {
-    return (ltk.chi2()/(float)ltk.ndof()) < (rtk.chi2()/(float)rtk.ndof());
+    //return (ltk.chi2()/(float)ltk.ndof()) < (rtk.chi2()/(float)rtk.ndof());
+    int lchi2 = std::floor(ltk.chi2Red()/2.0);  // round to 2.0 step
+    int rchi2 = std::floor(rtk.chi2Red()/2.0);  // round to 2.0 step
+    return (lchi2 < rchi2) || (lchi2 == rchi2 && ltk.ndof() > rtk.ndof());
   }
 }
 
@@ -29,7 +32,8 @@ void DuplicateRemoval::checkTracks(std::vector<TTTrack2>& all_tracks, int dupRm)
   if (dupRm != -1) {
     // Sort AM tracks by logic and pt (decreasing)
     //std::sort(all_tracks.begin(), all_tracks.end(), sortByLogicPt);
-    std::sort(all_tracks.begin(), all_tracks.end(), sortByChi2);
+    //std::sort(all_tracks.begin(), all_tracks.end(), sortByChi2);
+    std::stable_sort(all_tracks.begin(), all_tracks.end(), sortByChi2);
 
     // The duplicate removal itself
     std::vector<TTTrack2> unique_tracks;

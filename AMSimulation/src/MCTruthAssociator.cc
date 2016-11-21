@@ -65,7 +65,8 @@ float resolution(float qbpT, std::string trk_param){
 }
 
   static const float degrees_of_freedom = 4.0;
-  static const float match_chi2_cut   = 12.8;
+  //static const float match_chi2_cut   = 12.8;
+  static const float match_chi2_cut   = 16.0;
 }
 
 // _____________________________________________________________________________
