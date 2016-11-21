@@ -24,6 +24,7 @@ namespace slhcl1tt {
 
       int tt_eta = (etaStar + max_eta) / (max_eta*2./6);
       int tt_phi = (phiStar + M_PI) / (M_PI*2./8);
+      tt_phi = (tt_phi + 4) % 8;
       int tt = tt_eta * 8 + tt_phi;
       assert(0<=tt && tt<48);
       return tt;

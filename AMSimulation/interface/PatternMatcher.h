@@ -2,6 +2,10 @@
 #define AMSimulation_PatternMatcher_h_
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/Pattern.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTRoad.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackWriter.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TriggerTowerMap.h"
@@ -14,11 +18,14 @@ using namespace slhcl1tt;
 
 class PatternMatcher {
   public:
+    typedef PatternBankReaderT<kPatternMatcher> PatternBankReader;
+    typedef TTTrackReaderT<kPatternMatcher> TTStubPlusTPReader;
+    typedef TTTrackWriterT<kPatternMatcher> TTRoadWriter;
+
     // Constructor
     PatternMatcher(const ProgramOption& po)
     : po_(po),
-      nEvents_(po.maxEvents), verbose_(po.verbose), removeOverlap_(po.removeOverlap),
-      prefixRoad_("AMTTRoads_"), suffix_("") {
+      nEvents_(po.maxEvents), verbose_(po.verbose) {
 
         // Initialize
         ttmap_ = new TriggerTowerMap();
@@ -27,7 +34,8 @@ class PatternMatcher {
         arbiter_ = new SuperstripArbiter();
         arbiter_->setDefinition(po_.superstrip, po_.tower, ttmap_);
 
-        if (removeOverlap_) {
+        momap_ = 0;
+        if (po_.removeOverlap) {
             momap_   = new ModuleOverlapMap();
             momap_->readModuleOverlapMap(po_.datadir);
         }
@@ -37,6 +45,7 @@ class PatternMatcher {
     ~PatternMatcher() {
         if (ttmap_)     delete ttmap_;
         if (arbiter_)   delete arbiter_;
+        if (momap_)     delete momap_;
     }
 
     // Main driver
@@ -56,11 +65,6 @@ class PatternMatcher {
     const ProgramOption po_;
     long long nEvents_;
     int verbose_;
-    bool removeOverlap_;
-
-    // Configurations
-    const TString prefixRoad_;
-    const TString suffix_;
 
     // Operators
     TriggerTowerMap   * ttmap_;

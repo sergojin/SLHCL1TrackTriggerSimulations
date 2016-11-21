@@ -1,8 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/StubCleaner.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackParametersToTT.h"
-
 static const unsigned MIN_NGOODSTUBS = 3;
 static const unsigned MAX_NGOODSTUBS = 8;
 
@@ -69,19 +66,13 @@ int StubCleaner::cleanStubs(TString src, TString out) {
     // _________________________________________________________________________
     // For reading
     TTStubReader reader(verbose_);
-    if (reader.init(src, false)) {
-        std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // For writing
     TTStubWriter writer(verbose_);
-    if (writer.init(reader.getChain(), out)) {
-        std::cout << Error() << "Failed to initialize TTStubWriter." << std::endl;
-        return 1;
-    }
+    writer.init(reader.getChain(), out);
 
-    if (verbose_>2)  { // RR
+    if (po_.removeOverlap && verbose_>2)  { // RR
         std::map<unsigned,ModuleOverlap>::iterator it_mo;
         std::cout << Info() << momap_->moduleOverlap_map_.size() << std::endl;
         for (it_mo=momap_->moduleOverlap_map_.begin(); it_mo!=momap_->moduleOverlap_map_.end();++it_mo) {
@@ -155,7 +146,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
         if (!sim)
             keep = false;
 
-        if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " simPt: " << simPt << " simEta: " << simEta << " simPhi: " << simPhi << " simVz: " << simVz << " simChargeOverPt: " << simChargeOverPt << " keep? " << keep << std::endl;
+        if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " simPt: " << simPt << " simEta: " << simEta << " simPhi: " << simPhi << " simVz: " << simVz << " simChargeOverPt: " << simChargeOverPt << " aux_TT: " << aux_TT << " keep? " << keep << std::endl;
 
         // _____________________________________________________________________
         // Remove multiple stubs in one layer
@@ -176,7 +167,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
             float    stub_ds  = reader.vb_trigBend->at(istub);
 
             // RR removing stubs in the overlapping regions
-            if (removeOverlap_) {
+            if (po_.removeOverlap) {
                 float    stub_coordx = reader.vb_coordx->at(istub);
                 float    stub_coordy = reader.vb_coordy->at(istub);
                 std::map<unsigned,ModuleOverlap>::iterator it_mo = momap_->moduleOverlap_map_.find(moduleId);
@@ -202,7 +193,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
                         continue;
                     }
                 }
-            } // endif removeOverlap_
+            }  // end if removeOverlap
 
             unsigned lay16    = compressLayer(decodeLayer(moduleId));
             assert(lay16 < 16);
@@ -362,8 +353,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
 
     if (verbose_)  std::cout << Info() << Form("Read: %7ld, kept: %7ld", nRead, nKept) << std::endl;
 
-    long long nentries = writer.writeTree();
-    assert(nentries == nRead);
+    writer.write();
 
     return 0;
 }

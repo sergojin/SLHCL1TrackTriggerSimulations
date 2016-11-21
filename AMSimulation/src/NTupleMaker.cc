@@ -1,6 +1,6 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/NTupleMaker.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/Helper.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 using namespace slhcl1tt;
 
 

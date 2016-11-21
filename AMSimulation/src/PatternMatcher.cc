@@ -1,9 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternMatcher.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubPlusTPReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTRoadReader.h"
-
 
 // _____________________________________________________________________________
 int PatternMatcher::loadPatterns(TString bank) {
@@ -12,12 +8,9 @@ int PatternMatcher::loadPatterns(TString bank) {
     // _________________________________________________________________________
     // For reading pattern bank
     PatternBankReader pbreader(verbose_);
-    if (pbreader.init(bank)) {
-        std::cout << Error() << "Failed to initialize PatternBankReader." << std::endl;
-        return 1;
-    }
+    pbreader.init(bank);
 
-    long long npatterns = pbreader.getPatterns();
+    long long npatterns = pbreader.getEntries();
     if (npatterns > po_.maxPatterns)
         npatterns = po_.maxPatterns;
     assert(npatterns > 0);
@@ -85,17 +78,11 @@ int PatternMatcher::makeRoads(TString src, TString out) {
     // _________________________________________________________________________
     // For reading
     TTStubPlusTPReader reader(verbose_);
-    if (reader.init(src)) {
-        std::cout << Error() << "Failed to initialize TTStubPlusTPReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // For writing
     TTRoadWriter writer(verbose_);
-    if (writer.init(reader.getChain(), out, prefixRoad_, suffix_)) {
-        std::cout << Error() << "Failed to initialize TTRoadWriter." << std::endl;
-        return 1;
-    }
+    writer.init(reader.getChain(), out);
 
 
     // _________________________________________________________________________
@@ -121,7 +108,7 @@ int PatternMatcher::makeRoads(TString src, TString out) {
 
         if (!nstubs) {  // skip if no stub
             ++nRead;
-            writer.fill(std::vector<TTRoad>());
+            writer.fillRoads(std::vector<TTRoad>(), std::vector<std::string>(), std::vector<unsigned>());
             continue;
         }
 
@@ -144,37 +131,37 @@ int PatternMatcher::makeRoads(TString src, TString out) {
             stubsNotInTower.push_back(isNotInTower);
 
             // RR // Skip if in overlapping regions
-            if (removeOverlap_) {
-            float    stub_coordx = reader.vb_coordx->at(istub);
-            float    stub_coordy = reader.vb_coordy->at(istub);
-            std::map<unsigned,ModuleOverlap>::iterator it_mo = momap_->moduleOverlap_map_.find(moduleId);
-            if (it_mo != momap_->moduleOverlap_map_.end()) {
-                float minx = it_mo->second.x1;
-                if (stub_coordx < minx) {
-                    if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t" << moduleId << "\t x1: " <<  stub_coordx << std::endl;
-                    stubsInOverlapping.at(istub)=true;
-                    continue;
+            if (po_.removeOverlap) {
+                float    stub_coordx = reader.vb_coordx->at(istub);
+                float    stub_coordy = reader.vb_coordy->at(istub);
+                std::map<unsigned,ModuleOverlap>::iterator it_mo = momap_->moduleOverlap_map_.find(moduleId);
+                if (it_mo != momap_->moduleOverlap_map_.end()) {
+                    float minx = it_mo->second.x1;
+                    if (stub_coordx < minx) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t" << moduleId << "\t x1: " <<  stub_coordx << std::endl;
+                        stubsInOverlapping.at(istub)=true;
+                        continue;
+                    }
+                    float maxx = it_mo->second.x2;
+                    if (stub_coordx > maxx) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t x2: " <<  stub_coordx << std::endl;
+                        stubsInOverlapping.at(istub)=true;
+                        continue;
+                    }
+                    float miny = it_mo->second.y1;
+                    if (stub_coordy < miny) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y1: " <<  stub_coordy << std::endl;
+                        stubsInOverlapping.at(istub)=true;
+                        continue;
+                    }
+                    float maxy = it_mo->second.y2;
+                    if (stub_coordy > maxy) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y2: " <<  stub_coordy << std::endl;
+                        stubsInOverlapping.at(istub)=true;
+                        continue;
+                    }
                 }
-                float maxx = it_mo->second.x2;
-                if (stub_coordx > maxx) {
-                    if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t x2: " <<  stub_coordx << std::endl;
-                    stubsInOverlapping.at(istub)=true;
-                    continue;
-                }
-                float miny = it_mo->second.y1;
-                if (stub_coordy < miny) {
-                    if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y1: " <<  stub_coordy << std::endl;
-                    stubsInOverlapping.at(istub)=true;
-                    continue;
-                }
-                float maxy = it_mo->second.y2;
-                if (stub_coordy > maxy) {
-                    if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y2: " <<  stub_coordy << std::endl;
-                    stubsInOverlapping.at(istub)=true;
-                    continue;
-                }
-            }
-          }  // endif removeOverlap_
+            }  // end if removeOverlap
         }
 
         // Null stub information for those that are not in this trigger tower
@@ -214,7 +201,7 @@ int PatternMatcher::makeRoads(TString src, TString out) {
                 continue;
             }
 
-            if ((removeOverlap_) && stubsInOverlapping.at(istub)) {
+            if (po_.removeOverlap && stubsInOverlapping.at(istub)) {
                 stubs_bitString.push_back("");
                 stubs_superstripId.push_back(0);
                 continue;
@@ -317,7 +304,7 @@ int PatternMatcher::makeRoads(TString src, TString out) {
         assert(reader.vb_modId->size() == stubs_bitString.size());
         assert(reader.vb_modId->size() == stubs_superstripId.size());
 
-        writer.fill(roads, stubs_bitString, stubs_superstripId);
+        writer.fillRoads(roads, stubs_bitString, stubs_superstripId);
         ++nRead;
     }
 
@@ -328,8 +315,7 @@ int PatternMatcher::makeRoads(TString src, TString out) {
 
     if (verbose_)  std::cout << Info() << Form("Read: %7ld, triggered: %7ld", nRead, nKept) << std::endl;
 
-    long long nentries = writer.writeTree();
-    assert(nentries == nRead);
+    writer.write();
 
     return 0;
 }

@@ -1,7 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternAnalyzer.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include <fstream>
 
 namespace {
@@ -19,12 +17,9 @@ int PatternAnalyzer::loadPatterns(TString bank) {
     // _________________________________________________________________________
     // For reading pattern bank
     PatternBankReader pbreader(verbose_);
-    if (pbreader.init(bank)) {
-        std::cout << Error() << "Failed to initialize PatternBankReader." << std::endl;
-        return 1;
-    }
+    pbreader.init(bank);
 
-    long long npatterns = pbreader.getPatterns();
+    long long npatterns = pbreader.getEntries();
     if (npatterns > po_.maxPatterns)
         npatterns = po_.maxPatterns;
     assert(npatterns > 0);
@@ -70,10 +65,7 @@ int PatternAnalyzer::makePatterns(TString src) {
     // _________________________________________________________________________
     // For reading
     TTStubReader reader(verbose_);
-    if (reader.init(src, false)) {
-        std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // _________________________________________________________________________
     // Get trigger tower reverse map
@@ -314,10 +306,7 @@ int PatternAnalyzer::writePatterns(TString out) {
     // _________________________________________________________________________
     // For writing
     PatternBankWriter writer(verbose_);
-    if (writer.init(out)) {
-        std::cout << Error() << "Failed to initialize TTRoad writer." << std::endl;
-        return 1;
-    }
+    writer.init(out);
 
     // _________________________________________________________________________
     // Save pattern bank statistics
@@ -380,8 +369,7 @@ int PatternAnalyzer::writePatterns(TString out) {
         if (it->second)  it->second->SetDirectory(gDirectory);
     }
 
-    long long nentries = writer.writeTree();
-    assert(npatterns == nentries);
+    writer.write();
 
     return 0;
 }

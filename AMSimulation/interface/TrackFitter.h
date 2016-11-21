@@ -1,6 +1,9 @@
 #ifndef AMSimulation_TrackFitter_h_
 #define AMSimulation_TrackFitter_h_
 
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackWriter.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoPCA.h"
@@ -16,13 +19,14 @@ using namespace slhcl1tt;
 
 
 class TrackFitter {
-
   public:
+    typedef TTTrackReaderT<kTrackFitter> TTRoadReader;
+    typedef TTTrackWriterT<kTrackFitter> TTTrackWriter;
+
     // Constructor
     TrackFitter(const ProgramOption& po) :
       po_(po),
-      nEvents_(po.maxEvents), verbose_(po.verbose),
-      prefixRoad_("AMTTRoads_"), prefixTrack_("AMTTTracks_"), suffix_("") {
+      nEvents_(po.maxEvents), verbose_(po.verbose) {
 
         // Decide the track fitter to use
         fitter_ = 0;
@@ -58,11 +62,6 @@ class TrackFitter {
     const ProgramOption po_;
     long long nEvents_;
     int verbose_;
-
-    // Configurations
-    const TString prefixRoad_;
-    const TString prefixTrack_;
-    const TString suffix_;
 
     // Track fitter
     TrackFitterAlgoBase * fitter_;

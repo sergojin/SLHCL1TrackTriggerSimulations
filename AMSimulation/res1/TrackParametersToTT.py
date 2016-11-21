@@ -30,6 +30,7 @@ def TrackParametersToTT(phi, invPt, eta, z0):
 
     tt_eta = int((etaStar + max_eta) / (max_eta*2./6))
     tt_phi = int((phiStar + pi) / (pi*2./8))
+    tt_phi = (tt_phi + 4) % 8
     tt = tt_eta * 8 + tt_phi
     assert(0<=tt and tt<48)
     return tt

@@ -1,6 +1,7 @@
 #ifndef AMSimulation_MatrixTester_h_
 #define AMSimulation_MatrixTester_h_
 
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TriggerTowerMap.h"
@@ -10,6 +11,8 @@ using namespace slhcl1tt;
 
 class MatrixTester {
   public:
+    typedef TTStubReaderT<kPatternGenerator> TTStubReader;
+
     // Constructor
     MatrixTester(const ProgramOption& po)
     : po_(po),

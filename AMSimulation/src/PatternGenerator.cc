@@ -1,8 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternGenerator.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
-
 static const unsigned MAX_FREQUENCY = 0xffffffff;  // unsigned
 
 namespace {
@@ -21,10 +18,7 @@ int PatternGenerator::makePatterns(TString src) {
     // _________________________________________________________________________
     // For reading
     TTStubReader reader(verbose_);
-    if (reader.init(src, false)) {
-        std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // _________________________________________________________________________
     // Get trigger tower reverse map
@@ -202,10 +196,7 @@ int PatternGenerator::writePatterns(TString out) {
     // _________________________________________________________________________
     // For writing
     PatternBankWriter writer(verbose_);
-    if (writer.init(out)) {
-        std::cout << Error() << "Failed to initialize TTRoad writer." << std::endl;
-        return 1;
-    }
+    writer.init(out);
 
     // _________________________________________________________________________
     // Save pattern bank statistics
@@ -272,8 +263,7 @@ int PatternGenerator::writePatterns(TString out) {
         writer.fillPatternAttributes();
     }
 
-    long long nentries = writer.writeTree();
-    assert(npatterns == nentries);
+    writer.write();
     assert(coverage_count_ == nKept);
 
     if (verbose_)  {

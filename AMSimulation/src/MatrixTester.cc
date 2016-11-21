@@ -1,6 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/MatrixTester.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Statistics.h"
 #include <iomanip>
 #include <fstream>
@@ -14,10 +13,7 @@ int MatrixTester::testMatrices(TString src) {
     // _________________________________________________________________________
     // For reading
     TTStubReader reader(verbose_);
-    if (reader.init(src, false)) {
-        std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // _________________________________________________________________________
     // Get trigger tower reverse map

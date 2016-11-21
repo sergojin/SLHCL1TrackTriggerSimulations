@@ -1,9 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitter.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTRoadReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
-
-
 namespace {
 unsigned getPtSegment(float invPt) {  // for PCA
     return (invPt - PCA_MIN_INVPT) / (PCA_MAX_INVPT - PCA_MIN_INVPT) * PCA_NSEGMENTS;
@@ -68,19 +64,12 @@ int TrackFitter::makeTracks(TString src, TString out) {
     // _________________________________________________________________________
     // For reading
     TTRoadReader reader(verbose_);
-
-    if (reader.init(src, prefixRoad_, suffix_)) {
-        std::cout << Error() << "Failed to initialize TTRoadReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // _________________________________________________________________________
     // For writing
     TTTrackWriter writer(verbose_);
-    if (writer.init(reader.getChain(), out, prefixTrack_, suffix_)) {
-        std::cout << Error() << "Failed to initialize TTTrackWriter." << std::endl;
-        return 1;
-    }
+    writer.init(reader.getChain(), out);
 
     // _________________________________________________________________________
     // Loop over all events
@@ -101,7 +90,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # roads: " << nroads << std::endl;
 
         if (!nroads) {  // skip if no road
-            writer.fill(std::vector<TTTrack2>());
+            writer.fillTracks(std::vector<TTTrack2>());
             ++nRead;
             continue;
         }
@@ -287,7 +276,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
             truthAssociator_.associate(trkParts, tracks);
         }
 
-        writer.fill(tracks);
+        writer.fillTracks(tracks);
         ++nRead;
     }
 
@@ -307,8 +296,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
         if (it->second)  it->second->SetDirectory(gDirectory);
     }
 
-    long long nentries = writer.writeTree();
-    assert(nentries == nRead);
+    writer.write();
 
     return 0;
 }
