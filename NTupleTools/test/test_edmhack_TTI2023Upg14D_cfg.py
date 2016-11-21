@@ -12,7 +12,7 @@ defaultInputFiles = [
 #'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/02A8431A-4E9E-E611-B3D0-00266CFFBF34.root',
 ]
 options.setDefault('inputFiles', defaultInputFiles)
-options.setDefault('outputFile', 'ntuple.root')
+options.setDefault('outputFile', 'edmhack.root')
 options.parseArguments()
 
 
@@ -46,16 +46,29 @@ process.load('Geometry.TrackerGeometryBuilder.StackedTrackerGeometry_cfi')
 process.load('Configuration.StandardSequences.L1TrackTrigger_cff')
 process.L1TrackTrigger_custom=cms.Sequence(process.BeamSpotFromSim+process.TTTracksFromPixelDigis+process.TTTrackAssociatorFromPixelDigis)
 
-## Make the ntuple
-process.TFileService = cms.Service("TFileService",
-    fileName = cms.string(options.outputFile)
+# Output definition
+
+process.load('Configuration.EventContent.EventContent_cff')
+
+process.RAWSIMoutput = cms.OutputModule("PoolOutputModule",
+    splitLevel = cms.untracked.int32(0),
+    eventAutoFlushCompressedSize = cms.untracked.int32(5242880),
+    outputCommands = process.RAWSIMEventContent.outputCommands,
+    fileName = cms.untracked.string(options.outputFile),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(''),
+        dataTier = cms.untracked.string('GEN-SIM-DIGI-RAW')
+    ),
 )
-process.load("SLHCL1TrackTriggerSimulations.NTupleTools.sequences_cff")
+
+
+## Attach the ntuple back to EDM
+process.load("SLHCL1TrackTriggerSimulations.NTupleTools.edmHacker_cfi")
 
 ## Paths and schedule
-process.L1TrackTrigger_step=cms.Path(process.L1TrackTrigger_custom)
-process.p = cms.Path(process.ntupleSequence_TTI)
-process.schedule = cms.Schedule(process.L1TrackTrigger_step,process.p)
+process.p = cms.Path(process.edmHacker)
+process.RAWSIMoutput_step = cms.EndPath(process.RAWSIMoutput)
+process.schedule = cms.Schedule(process.p,process.RAWSIMoutput_step)
 
 ## filter all path with the skim
 #process.load("SLHCL1TrackTriggerSimulations.NTupleTools.simpleSkimmer_cfi")

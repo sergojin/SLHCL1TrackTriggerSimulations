@@ -5,7 +5,7 @@ runOnMC = True
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
-options.setDefault('inputFiles', ['file:rawsim_numEvent100.root']
+options.setDefault('inputFiles', ['file:rawsim_numEvent100.root'])
 options.setDefault('outputFile', 'ntuple.root')
 options.parseArguments()
 
