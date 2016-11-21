@@ -135,7 +135,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
             // Quote from Marco: The compiler will likely do RVO so the move might not be needed, we prefer to be explicit about it.
             std::vector<std::vector<unsigned> > combinations;
             if (po_.oldCB)
-                combinations = std::move(combinationFactory_.combine(stubRefs));
+                combinations = std::move(combinationFactory_.combine(stubRefs, po_.FiveOfSix));
             else if (po_.PDDS)
                 combinations = std::move(pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix));
             else
