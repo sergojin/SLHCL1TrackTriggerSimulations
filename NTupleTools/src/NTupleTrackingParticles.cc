@@ -33,8 +33,8 @@ NTupleTrackingParticles::NTupleTrackingParticles(const edm::ParameterSet& iConfi
     produces<std::vector<int> >      (prefix_ + "trkId"     + suffix_);
     produces<std::vector<int> >      (prefix_ + "genpId"    + suffix_);
     produces<std::vector<unsigned> > (prefix_ + "evtId"     + suffix_);
-    produces<std::vector<std::vector<unsigned> > > (prefix_ + "trkIds"  + suffix_);
-    produces<std::vector<std::vector<unsigned> > > (prefix_ + "genpIds" + suffix_);
+    //produces<std::vector<std::vector<unsigned> > > (prefix_ + "trkIds"  + suffix_);
+    //produces<std::vector<std::vector<unsigned> > > (prefix_ + "genpIds" + suffix_);
     produces<unsigned>               (prefix_ + "size"      + suffix_);
 }
 
@@ -61,8 +61,8 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
     std::auto_ptr<std::vector<int> >      v_trkId    (new std::vector<int>());
     std::auto_ptr<std::vector<int> >      v_genpId   (new std::vector<int>());
     std::auto_ptr<std::vector<unsigned> > v_evtId    (new std::vector<unsigned>());
-    std::auto_ptr<std::vector<std::vector<unsigned> > > v_trkIds (new std::vector<std::vector<unsigned> >());
-    std::auto_ptr<std::vector<std::vector<unsigned> > > v_genpIds(new std::vector<std::vector<unsigned> >());
+    //std::auto_ptr<std::vector<std::vector<unsigned> > > v_trkIds (new std::vector<std::vector<unsigned> >());
+    //std::auto_ptr<std::vector<std::vector<unsigned> > > v_genpIds(new std::vector<std::vector<unsigned> >());
     std::auto_ptr<unsigned>               v_size     (new unsigned(0));
 
     //__________________________________________________________________________
@@ -130,17 +130,17 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
                 v_genpId->push_back(genpId);
                 v_evtId->push_back(it->eventId().rawId());
 
-                std::vector<unsigned> trkIds;  // simTrackId (a.k.a. g4TrackId)
-                for (TrackingParticle::g4t_iterator itsim = it->g4Track_begin(); itsim != it->g4Track_end(); ++itsim) {
-                    trkIds.push_back(itsim->trackId());
-                }
-                v_trkIds->push_back(trkIds);
-
-                std::vector<unsigned> genpIds;
-                for (TrackingParticle::genp_iterator itgen = it->genParticle_begin(); itgen != it->genParticle_end(); ++itgen) {
-                    genpIds.push_back(itgen->key());
-                }
-                v_genpIds->push_back(genpIds);
+                //std::vector<unsigned> trkIds;  // simTrackId (a.k.a. g4TrackId)
+                //for (TrackingParticle::g4t_iterator itsim = it->g4Track_begin(); itsim != it->g4Track_end(); ++itsim) {
+                //    trkIds.push_back(itsim->trackId());
+                //}
+                //v_trkIds->push_back(trkIds);
+                //
+                //std::vector<unsigned> genpIds;
+                //for (TrackingParticle::genp_iterator itgen = it->genParticle_begin(); itgen != it->genParticle_end(); ++itgen) {
+                //    genpIds.push_back(itgen->key());
+                //}
+                //v_genpIds->push_back(genpIds);
 
                 n++;
             }
@@ -173,7 +173,7 @@ void NTupleTrackingParticles::produce(edm::Event& iEvent, const edm::EventSetup&
     iEvent.put(v_trkId    , prefix_ + "trkId"     + suffix_);
     iEvent.put(v_genpId   , prefix_ + "genpId"    + suffix_);
     iEvent.put(v_evtId    , prefix_ + "evtId"     + suffix_);
-    iEvent.put(v_trkIds   , prefix_ + "trkIds"    + suffix_);
-    iEvent.put(v_genpIds  , prefix_ + "genpIds"   + suffix_);
+    //iEvent.put(v_trkIds   , prefix_ + "trkIds"    + suffix_);
+    //iEvent.put(v_genpIds  , prefix_ + "genpIds"   + suffix_);
     iEvent.put(v_size     , prefix_ + "size"      + suffix_);
 }

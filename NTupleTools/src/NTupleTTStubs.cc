@@ -30,9 +30,9 @@ NTupleTTStubs::NTupleTTStubs(const edm::ParameterSet& iConfig) :
     produces<std::vector<float> >                   (prefix_ + "phi"            + suffix_);
     produces<std::vector<float> >                   (prefix_ + "coordx"         + suffix_);
     produces<std::vector<float> >                   (prefix_ + "coordy"         + suffix_);
-    produces<std::vector<float> >                   (prefix_ + "dirx"           + suffix_);
-    produces<std::vector<float> >                   (prefix_ + "diry"           + suffix_);
-    produces<std::vector<float> >                   (prefix_ + "dirz"           + suffix_);
+    //produces<std::vector<float> >                   (prefix_ + "dirx"           + suffix_);
+    //produces<std::vector<float> >                   (prefix_ + "diry"           + suffix_);
+    //produces<std::vector<float> >                   (prefix_ + "dirz"           + suffix_);
     produces<std::vector<float> >                   (prefix_ + "roughPt"        + suffix_);
     produces<std::vector<unsigned> >                (prefix_ + "modId"          + suffix_);
     produces<std::vector<unsigned> >                (prefix_ + "geoId0"         + suffix_);
@@ -60,7 +60,7 @@ NTupleTTStubs::NTupleTTStubs(const edm::ParameterSet& iConfig) :
     produces<std::vector<float> >                   (prefix_ + "simPt"          + suffix_);
     produces<std::vector<float> >                   (prefix_ + "simEta"         + suffix_);
     produces<std::vector<float> >                   (prefix_ + "simPhi"         + suffix_);
-    produces<std::vector<std::vector<int> > >       (prefix_ + "tpIds"          + suffix_);
+    //produces<std::vector<std::vector<int> > >       (prefix_ + "tpIds"          + suffix_);
     //produces<std::vector<std::vector<float> > >     (prefix_ + "fractions"      + suffix_);
     produces<unsigned>                              (prefix_ + "size"           + suffix_);
 }
@@ -92,9 +92,9 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     std::auto_ptr<std::vector<float> >                  v_phi           (new std::vector<float>());
     std::auto_ptr<std::vector<float> >                  v_coordx        (new std::vector<float>());
     std::auto_ptr<std::vector<float> >                  v_coordy        (new std::vector<float>());
-    std::auto_ptr<std::vector<float> >                  v_dirx          (new std::vector<float>());
-    std::auto_ptr<std::vector<float> >                  v_diry          (new std::vector<float>());
-    std::auto_ptr<std::vector<float> >                  v_dirz          (new std::vector<float>());
+    //std::auto_ptr<std::vector<float> >                  v_dirx          (new std::vector<float>());
+    //std::auto_ptr<std::vector<float> >                  v_diry          (new std::vector<float>());
+    //std::auto_ptr<std::vector<float> >                  v_dirz          (new std::vector<float>());
     std::auto_ptr<std::vector<float> >                  v_roughPt       (new std::vector<float>());
     std::auto_ptr<std::vector<unsigned> >               v_modId         (new std::vector<unsigned>());
     std::auto_ptr<std::vector<unsigned> >               v_geoId0        (new std::vector<unsigned>());
@@ -122,7 +122,7 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     std::auto_ptr<std::vector<float> >                  v_simPt         (new std::vector<float>());
     std::auto_ptr<std::vector<float> >                  v_simEta        (new std::vector<float>());
     std::auto_ptr<std::vector<float> >                  v_simPhi        (new std::vector<float>());
-    std::auto_ptr<std::vector<std::vector<int> > >      v_tpIds         (new std::vector<std::vector<int> >());
+    //std::auto_ptr<std::vector<std::vector<int> > >      v_tpIds         (new std::vector<std::vector<int> >());
     //std::auto_ptr<std::vector<std::vector<float> > >    v_fractions     (new std::vector<std::vector<float> >());
     std::auto_ptr<unsigned>                             v_size          (new unsigned(0));
 
@@ -217,7 +217,7 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
                 /// Positions, directions
                 const GlobalPoint&      globalPosition  = theStackedGeometry->findGlobalPosition(&(*it));
-                const GlobalVector&     globalDirection = theStackedGeometry->findGlobalDirection(&(*it));
+                //const GlobalVector&     globalDirection = theStackedGeometry->findGlobalDirection(&(*it));
                 const MeasurementPoint& localCoord0     = cluster0->findAverageLocalCoordinates();
                 const MeasurementPoint& localCoord1     = cluster1->findAverageLocalCoordinates();
                 double magfieldStrength = theMagneticField->inTesla(GlobalPoint(0,0,0)).z();
@@ -261,9 +261,9 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 v_phi->push_back(globalPosition.phi());
                 v_coordx->push_back(localCoord0.x());                 // sviret/HL_LHC: STUB_strip
                 v_coordy->push_back(localCoord0.y());                 // sviret/HL_LHC: STUB_seg
-                v_dirx->push_back(globalDirection.x());
-                v_diry->push_back(globalDirection.y());
-                v_dirz->push_back(globalDirection.z());
+                //v_dirx->push_back(globalDirection.x());
+                //v_diry->push_back(globalDirection.y());
+                //v_dirz->push_back(globalDirection.z());
                 v_roughPt->push_back(roughPt);                        // sviret/HL_LHC: STUB_pt
                 v_modId->push_back(moduleId0);
                 v_geoId0->push_back(geoId0.rawId());
@@ -293,7 +293,7 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 v_simPt->push_back(-99.);
                 v_simEta->push_back(-99.);
                 v_simPhi->push_back(-99.);
-                v_tpIds->push_back(std::vector<int>());
+                //v_tpIds->push_back(std::vector<int>());
                 //v_fractions->push_back(std::vector<float>());
 
                 /// Retrieve MC association
@@ -314,49 +314,49 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
                 }
 
                 /// Tracking particle association
-                if (pixelDigis.isValid() && pixelDigiSimLinks.isValid()) {
-                    std::vector<int> tpIds0;
-                    std::vector<int> tpIds1;
-
-                    const std::vector<Ref_PixelDigi_>& theHits0 = cluster0->getHits();
-                    assert(theHits0.size() == theCols.size());
-
-                    if (pixelDigiSimLinks->find(geoId0) != pixelDigiSimLinks->end()) {
-                        const ds_digisimlink& simlink0 = (*pixelDigiSimLinks)[geoId0];
-                        for (ds_digisimlink::const_iterator itsim = simlink0.data.begin(); itsim != simlink0.data.end(); ++itsim) {
-                            for (unsigned ihit=0; ihit<theHits0.size(); ++ihit) {
-                                if ((unsigned) theHits0.at(ihit)->channel() == itsim->channel()) {
-                                    if (itsim->fraction() > 0.3)  // 0.3 is arbitrary
-                                        tpIds0.push_back(trkToTPMap.get(itsim->SimTrackId(), itsim->eventId()));
-                                }
-                            }
-                        }
-                    }
-
-                    const std::vector<Ref_PixelDigi_>& theHits1 = cluster1->getHits();
-
-                    if (pixelDigiSimLinks->find(geoId1) != pixelDigiSimLinks->end()) {
-                        const ds_digisimlink& simlink1 = (*pixelDigiSimLinks)[geoId1];
-                        for (ds_digisimlink::const_iterator itsim = simlink1.data.begin(); itsim != simlink1.data.end(); ++itsim) {
-                            for (unsigned ihit=0; ihit<theHits1.size(); ++ihit) {
-                                if ((unsigned) theHits1.at(ihit)->channel() == itsim->channel()) {
-                                    if (itsim->fraction() > 0.3)  // 0.3 is arbitrary
-                                        tpIds1.push_back(trkToTPMap.get(itsim->SimTrackId(), itsim->eventId()));
-                                }
-                            }
-                        }
-                    }
-
-                    // Find common elements in two vectors
-                    std::vector<int> tpIds;
-                    std::sort(tpIds0.begin(), tpIds0.end());
-                    std::sort(tpIds1.begin(), tpIds1.end());
-                    tpIds0.erase(std::unique(tpIds0.begin(), tpIds0.end()), tpIds0.end());
-                    tpIds1.erase(std::unique(tpIds1.begin(), tpIds1.end()), tpIds1.end());
-                    std::set_intersection(tpIds0.begin(), tpIds0.end(), tpIds1.begin(), tpIds1.end(),
-                                          std::back_inserter(tpIds));
-                    v_tpIds->back() = tpIds;
-                }
+                //if (pixelDigis.isValid() && pixelDigiSimLinks.isValid()) {
+                //    std::vector<int> tpIds0;
+                //    std::vector<int> tpIds1;
+                //
+                //    const std::vector<Ref_PixelDigi_>& theHits0 = cluster0->getHits();
+                //    assert(theHits0.size() == theCols.size());
+                //
+                //    if (pixelDigiSimLinks->find(geoId0) != pixelDigiSimLinks->end()) {
+                //        const ds_digisimlink& simlink0 = (*pixelDigiSimLinks)[geoId0];
+                //        for (ds_digisimlink::const_iterator itsim = simlink0.data.begin(); itsim != simlink0.data.end(); ++itsim) {
+                //            for (unsigned ihit=0; ihit<theHits0.size(); ++ihit) {
+                //                if ((unsigned) theHits0.at(ihit)->channel() == itsim->channel()) {
+                //                    if (itsim->fraction() > 0.3)  // 0.3 is arbitrary
+                //                        tpIds0.push_back(trkToTPMap.get(itsim->SimTrackId(), itsim->eventId()));
+                //                }
+                //            }
+                //        }
+                //    }
+                //
+                //    const std::vector<Ref_PixelDigi_>& theHits1 = cluster1->getHits();
+                //
+                //    if (pixelDigiSimLinks->find(geoId1) != pixelDigiSimLinks->end()) {
+                //        const ds_digisimlink& simlink1 = (*pixelDigiSimLinks)[geoId1];
+                //        for (ds_digisimlink::const_iterator itsim = simlink1.data.begin(); itsim != simlink1.data.end(); ++itsim) {
+                //            for (unsigned ihit=0; ihit<theHits1.size(); ++ihit) {
+                //                if ((unsigned) theHits1.at(ihit)->channel() == itsim->channel()) {
+                //                    if (itsim->fraction() > 0.3)  // 0.3 is arbitrary
+                //                        tpIds1.push_back(trkToTPMap.get(itsim->SimTrackId(), itsim->eventId()));
+                //                }
+                //            }
+                //        }
+                //    }
+                //
+                //    // Find common elements in two vectors
+                //    std::vector<int> tpIds;
+                //    std::sort(tpIds0.begin(), tpIds0.end());
+                //    std::sort(tpIds1.begin(), tpIds1.end());
+                //    tpIds0.erase(std::unique(tpIds0.begin(), tpIds0.end()), tpIds0.end());
+                //    tpIds1.erase(std::unique(tpIds1.begin(), tpIds1.end()), tpIds1.end());
+                //    std::set_intersection(tpIds0.begin(), tpIds0.end(), tpIds1.begin(), tpIds1.end(),
+                //                          std::back_inserter(tpIds));
+                //    v_tpIds->back() = tpIds;
+                //}
 
                 n++;
             }
@@ -377,9 +377,9 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     iEvent.put(v_phi           , prefix_ + "phi"            + suffix_);
     iEvent.put(v_coordx        , prefix_ + "coordx"         + suffix_);
     iEvent.put(v_coordy        , prefix_ + "coordy"         + suffix_);
-    iEvent.put(v_dirx          , prefix_ + "dirx"           + suffix_);
-    iEvent.put(v_diry          , prefix_ + "diry"           + suffix_);
-    iEvent.put(v_dirz          , prefix_ + "dirz"           + suffix_);
+    //iEvent.put(v_dirx          , prefix_ + "dirx"           + suffix_);
+    //iEvent.put(v_diry          , prefix_ + "diry"           + suffix_);
+    //iEvent.put(v_dirz          , prefix_ + "dirz"           + suffix_);
     iEvent.put(v_roughPt       , prefix_ + "roughPt"        + suffix_);
     iEvent.put(v_modId         , prefix_ + "modId"          + suffix_);
     iEvent.put(v_geoId0        , prefix_ + "geoId0"         + suffix_);
@@ -407,7 +407,7 @@ void NTupleTTStubs::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     iEvent.put(v_simPt         , prefix_ + "simPt"          + suffix_);
     iEvent.put(v_simEta        , prefix_ + "simEta"         + suffix_);
     iEvent.put(v_simPhi        , prefix_ + "simPhi"         + suffix_);
-    iEvent.put(v_tpIds         , prefix_ + "tpIds"          + suffix_);
+    //iEvent.put(v_tpIds         , prefix_ + "tpIds"          + suffix_);
     //iEvent.put(v_fractions     , prefix_ + "fractions"      + suffix_);
     iEvent.put(v_size          , prefix_ + "size"           + suffix_);
 }
