@@ -6,7 +6,7 @@ runOnMC = True
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
 defaultInputFiles = [
-'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/004C20AB-4D9E-E611-AE77-00266CFFBDAC.root',
+#'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/004C20AB-4D9E-E611-AE77-00266CFFBDAC.root',
 #'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/007F6C2E-5A9E-E611-B0E2-C4346BC8D390.root',
 #'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/0208AEA5-4D9E-E611-ACE8-00266CFFCCC8.root',
 #'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/02A8431A-4E9E-E611-B3D0-00266CFFBF34.root',
@@ -69,6 +69,16 @@ from SLHCUpgradeSimulations.Configuration.combinedCustoms import cust_2023TTI
 
 #call to customisation function cust_2023TTI imported from SLHCUpgradeSimulations.Configuration.combinedCustoms
 process = cust_2023TTI(process)
+
+def slim(process):
+    #ntupleSequence_TTI = cms.Sequence(ntupleGenParticles+genParticlesForJetsNoMuNoNu+ak4GenJetsNoMuNoNu+ntupleGenJets+genParticlesForMETAllVisible+genMetTrue+ntupleGenMET+simBeamSpot+ntupleBeamSpot+ntupleGenEventInfo+ntupleSimTracks+ntupleSimVertices+ntupleTrackingParticles+ntupleTrackingVertices+ntupleTTClustersForTTI+ntupleTTStubsForTTI+ntupleTTTracks+ntupleEventInfo+ntupler)
+    #process.ntupleSequence_TTI = cms.Sequence(process.ntupleGenParticles+process.genParticlesForJetsNoMuNoNu+process.ak4GenJetsNoMuNoNu+process.ntupleGenJets+process.ntupleGenEventInfo+process.ntupleTrackingParticles+process.ntupleTrackingVertices+process.ntupleTTStubsForTTI+process.ntupleEventInfo+process.ntupler)
+    process.ntupleSequence_TTI = cms.Sequence(process.ntupleGenParticles+process.ntupleTrackingParticles+process.ntupleTTStubsForTTI+process.ntupleEventInfo+process.ntupler)
+    process.p = cms.Path(process.ntupleSequence_TTI)
+    process.schedule = cms.Schedule(process.p)
+    return process
+
+process = slim(process)
 
 # End of customisation functions
 
