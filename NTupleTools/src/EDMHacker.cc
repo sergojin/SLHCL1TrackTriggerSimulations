@@ -33,19 +33,22 @@ void EDMHacker::beginJob() {
     assert(ttree_ != 0);
 
     // For TTree branches
-    vb_modId    = 0;
-    vt_pt       = 0;
-    vt_eta      = 0;
-    vt_rinv     = 0;
-    vt_invPt    = 0;
-    vt_phi0     = 0;
-    vt_cottheta = 0;
-    vt_z0       = 0;
-    vt_d0       = 0;
-    vt_chi2     = 0;
-    vt_ndof     = 0;
-    vt_tower    = 0;
-    vt_stubRefs = 0;
+    vb_modId      = 0;
+    vt_pt         = 0;
+    vt_eta        = 0;
+    vt_rinv       = 0;
+    vt_invPt      = 0;
+    vt_phi0       = 0;
+    vt_cottheta   = 0;
+    vt_z0         = 0;
+    vt_d0         = 0;
+    vt_chi2       = 0;
+    vt_ndof       = 0;
+    vt_tower      = 0;
+    vt_roadRef    = 0;
+    vt_combRef    = 0;
+    vt_patternRef = 0;
+    vt_stubRefs   = 0;
 
     // Stub information
     ttree_->SetBranchAddress("TTStubs_modId"     , &(vb_modId));
@@ -63,6 +66,9 @@ void EDMHacker::beginJob() {
     ttree_->SetBranchAddress(prefix + "chi2"         + suffix, &(vt_chi2));
     ttree_->SetBranchAddress(prefix + "ndof"         + suffix, &(vt_ndof));
     ttree_->SetBranchAddress(prefix + "tower"        + suffix, &(vt_tower));
+    ttree_->SetBranchAddress(prefix + "roadRef"      + suffix, &(vt_roadRef));
+    ttree_->SetBranchAddress(prefix + "combRef"      + suffix, &(vt_combRef));
+    ttree_->SetBranchAddress(prefix + "patternRef"   + suffix, &(vt_patternRef));
     ttree_->SetBranchAddress(prefix + "stubRefs"     + suffix, &(vt_stubRefs));
 
     if (verbose_)  std::cout << "[INFO] got ttree with num entries: " << ttree_->GetEntries() << std::endl;
@@ -172,18 +178,21 @@ void EDMHacker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
         if (verbose_)  std::cout << ".. Processing track: " << itrack << std::endl;
 
-        const auto& track_pt       = vt_pt      ->at(itrack);
-        const auto& track_eta      = vt_eta     ->at(itrack);
-        const auto& track_rinv     = vt_rinv    ->at(itrack);
-        //const auto& track_invPt    = vt_invPt   ->at(itrack);
-        const auto& track_phi0     = vt_phi0    ->at(itrack);
-        //const auto& track_cottheta = vt_cottheta->at(itrack);
-        const auto& track_z0       = vt_z0      ->at(itrack);
-        //const auto& track_d0       = vt_d0      ->at(itrack);
-        const auto& track_chi2     = vt_chi2    ->at(itrack);
-        //const auto& track_ndof     = vt_ndof    ->at(itrack);
-        const auto& track_tower    = vt_tower   ->at(itrack);
-        const auto& track_stubRefs = vt_stubRefs->at(itrack);
+        const auto& track_pt         = vt_pt      ->at(itrack);
+        const auto& track_eta        = vt_eta     ->at(itrack);
+        const auto& track_rinv       = vt_rinv    ->at(itrack);
+        //const auto& track_invPt      = vt_invPt   ->at(itrack);
+        const auto& track_phi0       = vt_phi0    ->at(itrack);
+        //const auto& track_cottheta   = vt_cottheta->at(itrack);
+        const auto& track_z0         = vt_z0      ->at(itrack);
+        //const auto& track_d0         = vt_d0      ->at(itrack);
+        const auto& track_chi2       = vt_chi2    ->at(itrack);
+        //const auto& track_ndof       = vt_ndof    ->at(itrack);
+        const auto& track_tower      = vt_tower   ->at(itrack);
+        const auto& track_roadRef    = vt_roadRef ->at(itrack);
+        //const auto& track_combRef    = vt_combRef ->at(itrack);
+        //const auto& track_patternRef = vt_patternRef ->at(itrack);
+        const auto& track_stubRefs   = vt_stubRefs->at(itrack);
 
         // Track stubs
         std::vector<ref_stub> theStubRefs;
@@ -209,7 +218,8 @@ void EDMHacker::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         out_track.setRInv(track_rinv, nPar);
         out_track.setPOCA(poca, nPar);
         out_track.setSector(track_tower);
-        out_track.setWedge(999999);
+        //out_track.setWedge(999999);
+        out_track.setWedge(track_roadRef);  // dirty hack to store track roadRef
         out_track.setChi2(track_chi2, nPar);
         out_track.setStubPtConsistency(999999., nPar);
 

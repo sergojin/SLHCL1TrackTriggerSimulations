@@ -43,6 +43,9 @@ class EDMHacker : public edm::EDProducer {
     std::vector<float> *                  vt_chi2;        // track fit chi-squared
     std::vector<int> *                    vt_ndof;        // track fit num of degrees of freedom
     std::vector<unsigned> *               vt_tower;       // track tower
+    std::vector<unsigned> *               vt_roadRef;     // track road id
+    std::vector<unsigned> *               vt_combRef;     // track combination id
+    std::vector<unsigned> *               vt_patternRef;  // track pattern id
     std::vector<std::vector<unsigned> > * vt_stubRefs;    // track stub ids
 
     // For event setup
