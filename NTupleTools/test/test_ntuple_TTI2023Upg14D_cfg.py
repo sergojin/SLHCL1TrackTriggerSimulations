@@ -72,8 +72,7 @@ process = cust_2023TTI(process)
 
 def slim(process):
     #ntupleSequence_TTI = cms.Sequence(ntupleGenParticles+genParticlesForJetsNoMuNoNu+ak4GenJetsNoMuNoNu+ntupleGenJets+genParticlesForMETAllVisible+genMetTrue+ntupleGenMET+simBeamSpot+ntupleBeamSpot+ntupleGenEventInfo+ntupleSimTracks+ntupleSimVertices+ntupleTrackingParticles+ntupleTrackingVertices+ntupleTTClustersForTTI+ntupleTTStubsForTTI+ntupleTTTracks+ntupleEventInfo+ntupler)
-    #process.ntupleSequence_TTI = cms.Sequence(process.ntupleGenParticles+process.genParticlesForJetsNoMuNoNu+process.ak4GenJetsNoMuNoNu+process.ntupleGenJets+process.ntupleGenEventInfo+process.ntupleTrackingParticles+process.ntupleTrackingVertices+process.ntupleTTStubsForTTI+process.ntupleEventInfo+process.ntupler)
-    process.ntupleSequence_TTI = cms.Sequence(process.ntupleGenParticles+process.ntupleTrackingParticles+process.ntupleTTStubsForTTI+process.ntupleEventInfo+process.ntupler)
+    process.ntupleSequence_TTI = cms.Sequence(process.ntupleGenParticles+process.genParticlesForJetsNoMuNoNu+process.ak4GenJetsNoMuNoNu+process.ntupleGenJets+process.ntupleTrackingParticles+process.ntupleTTStubsForTTI+process.ntupleEventInfo+process.ntupler)
     process.p = cms.Path(process.ntupleSequence_TTI)
     process.schedule = cms.Schedule(process.p)
     return process
