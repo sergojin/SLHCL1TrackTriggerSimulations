@@ -26,6 +26,8 @@
 #include <string>
 #include <vector>
 
+#include "TrackParametersToTT.h"
+
 using namespace std;
 
 void SetPlotStyle();
@@ -92,6 +94,7 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   // ----------------------------------------------------------------------------------------------------------------
   // read ntuples
   TChain* tree = new TChain("L1TrackNtuple/eventTree");
+  //TChain* tree = new TChain("AML1TrackNtuple/eventTree");
   tree->Add(type+".root");
   
   if (tree->GetEntries() == 0) {
@@ -659,6 +662,15 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
     // ----------------------------------------------------------------------------------------------------------------
     // tracking particle loop
     for (int it=0; it<(int)tp_pt->size(); it++) {
+
+      {  // jftest
+      float fcharge = (tp_pdgid->at(it) > 0) ? 1 : -1;
+      if (abs(tp_pdgid->at(it)) == 11 || abs(tp_pdgid->at(it)) == 13 || abs(tp_pdgid->at(it)) == 15 || abs(tp_pdgid->at(it)) == 3112 || abs(tp_pdgid->at(it)) == 3312 || abs(tp_pdgid->at(it)) == 3334 || abs(tp_pdgid->at(it)) == 5132)
+        fcharge = (tp_pdgid->at(it) > 0) ? -1 : 1;
+      int aux_tt = TrackParametersToTT().get_tt(tp_phi->at(it), fcharge/tp_pt->at(it), tp_eta->at(it), tp_z0->at(it));
+      if (aux_tt != 25)
+        continue;
+      }  // jftest
 
       // only look at TPs in (ttbar) jets
       if (TP_select_injet == 1 && tp_injet->at(it) == 0) continue;       
@@ -1498,6 +1510,7 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   TCanvas c;
 
   TString DIR = "TrkPlots/";
+  //TString DIR = "TrkPlots2/";
 
   // plots overlaying 68, 90, 99% confidence levels]
   if (doDetailedPlots) {
