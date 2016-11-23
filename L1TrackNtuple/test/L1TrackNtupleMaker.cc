@@ -1545,4 +1545,5 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
 
 ///////////////////////////
 // DEFINE THIS AS A PLUG-IN
-DEFINE_FWK_MODULE(L1TrackNtupleMaker);
+typedef L1TrackNtupleMaker L1TrackNtupleMaker2;
+DEFINE_FWK_MODULE(L1TrackNtupleMaker2);

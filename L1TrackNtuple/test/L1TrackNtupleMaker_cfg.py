@@ -5,6 +5,18 @@
 import FWCore.ParameterSet.Config as cms
 import os
 process = cms.Process("L1TrackNtuple")
+
+from FWCore.ParameterSet.VarParsing import VarParsing
+options = VarParsing('analysis')
+defaultInputFiles = [
+#'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/004C20AB-4D9E-E611-AE77-00266CFFBDAC.root',
+#'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/007F6C2E-5A9E-E611-B0E2-C4346BC8D390.root',
+#'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/0208AEA5-4D9E-E611-ACE8-00266CFFCCC8.root',
+#'/store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/PU200_DES23_62_V1-v1/110000/02A8431A-4E9E-E611-B3D0-00266CFFBF34.root',
+]
+options.setDefault('inputFiles', defaultInputFiles)
+options.setDefault('outputFile', 'ntuple_TTI.root')
+options.parseArguments()
  
  
 ############################################################
@@ -30,7 +42,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 # input and output
 ############################################################
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1000))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(options.maxEvents))
 Source_Files = cms.untracked.vstring(
     ## ttbar PU=140
     #'/store/group/upgrade/Tracker/L1Tracking/Synchro/Input/TTbar/CMSSW_6_2_0_SLHC26-DES23_62_V1_LHCCRefPU140-v1/FC5CDAC1-4E2F-E511-8085-0026189438D9.root'
@@ -50,9 +62,10 @@ Source_Files = cms.untracked.vstring(
     #'file:TTbar_new_6.root',
     "root://xrootd.unl.edu//store/mc/TTI2023Upg14D/PYTHIA6_Tauola_TTbar_TuneZ2star_14TeV/GEN-SIM-DIGI-RAW/DES23_62_V1-v1/70000/0040AD92-0493-E611-9E16-0025907B4EDC.root"
 	)
-process.source = cms.Source("PoolSource", fileNames = Source_Files)
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string('ntuple_TTbar_PU0.root'), closeFileFast = cms.untracked.bool(True))
+process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(options.inputFiles))
+
+process.TFileService = cms.Service("TFileService", fileName = cms.string(options.outputFile), closeFileFast = cms.untracked.bool(True))
 
 
 ############################################################
@@ -107,12 +120,12 @@ process.pL1TkPrimaryVertexMC = cms.Path( process.L1TkPrimaryVertexMC )
 #      inclusively, store all TPs (also those not from primary interaction, if available in samples you are running on) = 1
 ############################################################
 
-process.L1TrackNtuple = cms.EDAnalyzer('L1TrackNtupleMaker',
+process.L1TrackNtuple = cms.EDAnalyzer('L1TrackNtupleMaker2',
                                        MyProcess = cms.int32(1),
                                        Slim = cms.bool(True),            # only keep the branches we really need
                                        DebugMode = cms.bool(False),      # printout lots of debug statements
                                        SaveAllTracks = cms.bool(True),   # save *all* L1 tracks, not just truth matched to primary particle
-                                       SaveStubs = cms.bool(False),      # save some info for *all* stubs
+                                       SaveStubs = cms.bool(True),       # save some info for *all* stubs
                                        L1Tk_nPar = cms.int32(4),         # use 4 or 5-parameter L1 track fit ??
                                        L1Tk_minNStub = cms.int32(4),     # L1 tracks with >= 4 stubs
                                        TP_minNStub = cms.int32(4),       # require TP to have >= X number of stubs associated with it
@@ -148,6 +161,22 @@ process.ana = cms.Path(process.L1TrackNtuple)
 
 
 ############################################################
+# jftest
+############################################################
+## Attach the ntuple back to EDM
+process.load("SLHCL1TrackTriggerSimulations.NTupleTools.edmHacker_cfi")
+process.AMTTTrackAssociatorFromPixelDigis = process.TTTrackAssociatorFromPixelDigis.clone(
+    TTTracks = cms.VInputTag(cms.InputTag("edmHacker","AMTTTracks")),
+)
+process.AMTrackTrigger = cms.Sequence(process.edmHacker+process.AMTTTrackAssociatorFromPixelDigis)
+process.AML1TrackNtuple = process.L1TrackNtuple.clone(
+    L1TrackInputTag = cms.InputTag("edmHacker", "AMTTTracks"),               # TTTrack input
+    MCTruthTrackInputTag = cms.InputTag("AMTTTrackAssociatorFromPixelDigis", "AMTTTracks"), # MCTruth input
+)
+process.anna = cms.Path(process.AMTrackTrigger*process.AML1TrackNtuple)
+
+
+############################################################
 # output module
 ############################################################
 
@@ -180,4 +209,10 @@ process=customise_ev_BE5DPixel10D(process)
 # process schedule
 ############################################################
 
-process.schedule = cms.Schedule(process.TT_step,process.TTAssociator_step,process.pL1TkPrimaryVertex,process.pL1TkPrimaryVertexMC,process.ana)
+process.schedule = cms.Schedule(process.TT_step,process.TTAssociator_step,process.pL1TkPrimaryVertex,process.pL1TkPrimaryVertexMC,process.ana,process.anna)
+
+
+# Configure framework report and summary
+process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
+
