@@ -52,6 +52,11 @@ public:
     std::vector<float> *          vp_vz;        // particle vertex, z [cm]
     std::vector<int> *            vp_charge;    // particle charge
 
+    // genJet information
+    std::vector<float> *          vj_pt;        // jet pT [GeV]
+    std::vector<float> *          vj_eta;       // jet eta
+    std::vector<float> *          vj_phi;       // jet phi [rad]
+
     // trkParticle information
     std::vector<float> *          vp2_pt;
     std::vector<float> *          vp2_eta;
@@ -139,6 +144,10 @@ TTTrackReaderT<T>::TTTrackReaderT(int verbose) :
     vp_vy               (0),
     vp_vz               (0),
     vp_charge           (0),
+    //
+    vj_pt               (0),
+    vj_eta              (0),
+    vj_phi              (0),
     //
     vp2_pt              (0),
     vp2_eta             (0),
@@ -252,6 +261,10 @@ void TTTrackReaderT<T>::init(TString src) {
         tchain_->SetBranchStatus("genParts_vz"       , 1);
         tchain_->SetBranchStatus("genParts_charge"   , 1);
         //
+        tchain_->SetBranchStatus("genJets_pt"        , 1);
+        tchain_->SetBranchStatus("genJets_eta"       , 1);
+        tchain_->SetBranchStatus("genJets_phi"       , 1);
+        //
         tchain_->SetBranchStatus("trkParts_pt"       , 1);
         tchain_->SetBranchStatus("trkParts_eta"      , 1);
         tchain_->SetBranchStatus("trkParts_phi"      , 1);
@@ -275,36 +288,49 @@ void TTTrackReaderT<T>::init(TString src) {
         tchain_->SetBranchStatus("TTStubs_tpId"      , 1);
     }
 
-    tchain_->SetBranchAddress("genParts_pt"       , &(vp_pt));
-    tchain_->SetBranchAddress("genParts_eta"      , &(vp_eta));
-    tchain_->SetBranchAddress("genParts_phi"      , &(vp_phi));
-    tchain_->SetBranchAddress("genParts_vx"       , &(vp_vx));
-    tchain_->SetBranchAddress("genParts_vy"       , &(vp_vy));
-    tchain_->SetBranchAddress("genParts_vz"       , &(vp_vz));
-    tchain_->SetBranchAddress("genParts_charge"   , &(vp_charge));
+    if (T == kFuture) {
+        tchain_->SetBranchAddress("genParts_pt"       , &(vp_pt));
+        tchain_->SetBranchAddress("genParts_eta"      , &(vp_eta));
+        tchain_->SetBranchAddress("genParts_phi"      , &(vp_phi));
+        tchain_->SetBranchAddress("genParts_vx"       , &(vp_vx));
+        tchain_->SetBranchAddress("genParts_vy"       , &(vp_vy));
+        tchain_->SetBranchAddress("genParts_vz"       , &(vp_vz));
+        tchain_->SetBranchAddress("genParts_charge"   , &(vp_charge));
+    }
     //
-    tchain_->SetBranchAddress("trkParts_pt"       , &(vp2_pt));
-    tchain_->SetBranchAddress("trkParts_eta"      , &(vp2_eta));
-    tchain_->SetBranchAddress("trkParts_phi"      , &(vp2_phi));
-    tchain_->SetBranchAddress("trkParts_vx"       , &(vp2_vx));
-    tchain_->SetBranchAddress("trkParts_vy"       , &(vp2_vy));
-    tchain_->SetBranchAddress("trkParts_vz"       , &(vp2_vz));
-    tchain_->SetBranchAddress("trkParts_charge"   , &(vp2_charge));
-    tchain_->SetBranchAddress("trkParts_pdgId"    , &(vp2_pdgId));
-    tchain_->SetBranchAddress("trkParts_signal"   , &(vp2_signal));
-    tchain_->SetBranchAddress("trkParts_intime"   , &(vp2_intime));
-    tchain_->SetBranchAddress("trkParts_primary"  , &(vp2_primary));
+    if (T == kFuture) {
+        tchain_->SetBranchAddress("genJets_pt"        , &(vj_pt));
+        tchain_->SetBranchAddress("genJets_eta"       , &(vj_eta));
+        tchain_->SetBranchAddress("genJets_phi"       , &(vj_phi));
+    }
     //
-    tchain_->SetBranchAddress("TTStubs_z"         , &(vb_z));
-    tchain_->SetBranchAddress("TTStubs_r"         , &(vb_r));
-    tchain_->SetBranchAddress("TTStubs_eta"       , &(vb_eta));
-    tchain_->SetBranchAddress("TTStubs_phi"       , &(vb_phi));
-    tchain_->SetBranchAddress("TTStubs_coordx"    , &(vb_coordx));
-    tchain_->SetBranchAddress("TTStubs_coordy"    , &(vb_coordy));
-    tchain_->SetBranchAddress("TTStubs_trigBend"  , &(vb_trigBend));
-    tchain_->SetBranchAddress("TTStubs_modId"     , &(vb_modId));
-    tchain_->SetBranchAddress("TTStubs_tpId"      , &(vb_tpId));
-    if (T == kRoadMerging || T == kTrackFitter || T == kFuture) {
+    if (T == kPatternMatcher || T == kTrackFitter || T == kFuture) {
+        tchain_->SetBranchAddress("trkParts_pt"       , &(vp2_pt));
+        tchain_->SetBranchAddress("trkParts_eta"      , &(vp2_eta));
+        tchain_->SetBranchAddress("trkParts_phi"      , &(vp2_phi));
+        tchain_->SetBranchAddress("trkParts_vx"       , &(vp2_vx));
+        tchain_->SetBranchAddress("trkParts_vy"       , &(vp2_vy));
+        tchain_->SetBranchAddress("trkParts_vz"       , &(vp2_vz));
+        tchain_->SetBranchAddress("trkParts_charge"   , &(vp2_charge));
+        tchain_->SetBranchAddress("trkParts_pdgId"    , &(vp2_pdgId));
+        tchain_->SetBranchAddress("trkParts_signal"   , &(vp2_signal));
+        tchain_->SetBranchAddress("trkParts_intime"   , &(vp2_intime));
+        tchain_->SetBranchAddress("trkParts_primary"  , &(vp2_primary));
+    }
+    //
+    if (T == kPatternMatcher || T == kTrackFitter || T == kFuture) {
+        tchain_->SetBranchAddress("TTStubs_z"         , &(vb_z));
+        tchain_->SetBranchAddress("TTStubs_r"         , &(vb_r));
+        tchain_->SetBranchAddress("TTStubs_eta"       , &(vb_eta));
+        tchain_->SetBranchAddress("TTStubs_phi"       , &(vb_phi));
+        tchain_->SetBranchAddress("TTStubs_coordx"    , &(vb_coordx));
+        tchain_->SetBranchAddress("TTStubs_coordy"    , &(vb_coordy));
+        tchain_->SetBranchAddress("TTStubs_trigBend"  , &(vb_trigBend));
+        tchain_->SetBranchAddress("TTStubs_modId"     , &(vb_modId));
+        tchain_->SetBranchAddress("TTStubs_tpId"      , &(vb_tpId));
+    }
+    //
+    if (T == kTrackFitter || T == kFuture) {
         tchain_->SetBranchAddress("TTStubs_bitString"   , &(vb_bitString));
         tchain_->SetBranchAddress("TTStubs_superstripId", &(vb_superstripId));
     }

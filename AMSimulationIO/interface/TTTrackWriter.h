@@ -222,106 +222,112 @@ void TTTrackWriterT<T>::init(TTree* intree, TString out) {
 
 template<size_t T>
 void TTTrackWriterT<T>::fillRoads(const std::vector<TTRoad>& roads) {
-    vr_patternRef   ->clear();
-    vr_tower        ->clear();
-    vr_nstubs       ->clear();
-    vr_patternInvPt ->clear();
-    vr_patternFreq  ->clear();
-    vr_superstripIds->clear();
-    vr_stubRefs     ->clear();
+    if (T == kPatternMatcher) {
+        vr_patternRef   ->clear();
+        vr_tower        ->clear();
+        vr_nstubs       ->clear();
+        vr_patternInvPt ->clear();
+        vr_patternFreq  ->clear();
+        vr_superstripIds->clear();
+        vr_stubRefs     ->clear();
 
-    const unsigned nroads = roads.size();
-    for (unsigned i=0; i<nroads; ++i) {
-        const TTRoad& road = roads.at(i);
-        vr_patternRef   ->push_back(road.patternRef);
-        vr_tower        ->push_back(road.tower);
-        vr_nstubs       ->push_back(road.nstubs);
-        vr_patternInvPt ->push_back(road.patternInvPt);
-        vr_patternFreq  ->push_back(road.patternFreq);
-        vr_superstripIds->push_back(road.superstripIds);
-        vr_stubRefs     ->push_back(road.stubRefs);
+        const unsigned nroads = roads.size();
+        for (unsigned i=0; i<nroads; ++i) {
+            const TTRoad& road = roads.at(i);
+            vr_patternRef   ->push_back(road.patternRef);
+            vr_tower        ->push_back(road.tower);
+            vr_nstubs       ->push_back(road.nstubs);
+            vr_patternInvPt ->push_back(road.patternInvPt);
+            vr_patternFreq  ->push_back(road.patternFreq);
+            vr_superstripIds->push_back(road.superstripIds);
+            vr_stubRefs     ->push_back(road.stubRefs);
+        }
+        assert(vr_patternRef->size() == nroads);
+
+        ttree_->Fill();
     }
-    assert(vr_patternRef->size() == nroads);
-
-    ttree_->Fill();
 }
 
 template<size_t T>
 void TTTrackWriterT<T>::fillRoads(const std::vector<TTRoad>& roads, const std::vector<std::string>& stubs_bitString, const std::vector<unsigned>& stubs_superstripId) {
-    *vb_bitString = stubs_bitString;
-    *vb_superstripId = stubs_superstripId;
-    fillRoads(roads);
+    if (T == kPatternMatcher) {
+        *vb_bitString = stubs_bitString;
+        *vb_superstripId = stubs_superstripId;
+        fillRoads(roads);
+    }
 }
 
 template<size_t T>
 void TTTrackWriterT<T>::fillTracks(const std::vector<TTTrack2>& tracks) {
-    //vt_px              ->clear();
-    //vt_py              ->clear();
-    //vt_pz              ->clear();
-    vt_pt              ->clear();
-    vt_eta             ->clear();
-    //vt_phi             ->clear();
-    //vt_vx              ->clear();
-    //vt_vy              ->clear();
-    //vt_vz              ->clear();
-    vt_rinv            ->clear();
-    vt_invPt           ->clear();
-    vt_phi0            ->clear();
-    vt_cottheta        ->clear();
-    vt_z0              ->clear();
-    vt_d0              ->clear();
-    vt_chi2            ->clear();
-    vt_ndof            ->clear();
-    vt_synMatchChi2    ->clear();
-    vt_synMatchCat     ->clear();
-    vt_tpId            ->clear();
-    vt_synTpId         ->clear();
-    vt_tower           ->clear();
-    vt_hitBits         ->clear();
-    vt_ptSegment       ->clear();
-    vt_roadRef         ->clear();
-    vt_combRef         ->clear();
-    vt_patternRef      ->clear();
-    vt_stubRefs        ->clear();
-    vt_principals      ->clear();
+    if (T == kTrackFitter) {
+        //vt_px              ->clear();
+        //vt_py              ->clear();
+        //vt_pz              ->clear();
+        vt_pt              ->clear();
+        vt_eta             ->clear();
+        //vt_phi             ->clear();
+        //vt_vx              ->clear();
+        //vt_vy              ->clear();
+        //vt_vz              ->clear();
+        vt_rinv            ->clear();
+        vt_invPt           ->clear();
+        vt_phi0            ->clear();
+        vt_cottheta        ->clear();
+        vt_z0              ->clear();
+        vt_d0              ->clear();
+        vt_chi2            ->clear();
+        vt_ndof            ->clear();
+        vt_synMatchChi2    ->clear();
+        vt_synMatchCat     ->clear();
+        vt_tpId            ->clear();
+        vt_synTpId         ->clear();
+        vt_tower           ->clear();
+        vt_hitBits         ->clear();
+        vt_ptSegment       ->clear();
+        vt_roadRef         ->clear();
+        vt_combRef         ->clear();
+        vt_patternRef      ->clear();
+        vt_stubRefs        ->clear();
+        vt_principals      ->clear();
 
-    const unsigned ntracks = tracks.size();
-    for (unsigned i=0; i<ntracks; ++i) {
-        const TTTrack2& track = tracks.at(i);
+        const unsigned ntracks = tracks.size();
+        for (unsigned i=0; i<ntracks; ++i) {
+            const TTTrack2& track = tracks.at(i);
 
-        //vt_px              ->push_back(track.px());
-        //vt_py              ->push_back(track.py());
-        //vt_pz              ->push_back(track.pz());
-        vt_pt              ->push_back(track.pt());
-        vt_eta             ->push_back(track.eta());
-        //vt_phi             ->push_back(track.phi());
-        //vt_vx              ->push_back(track.vx());
-        //vt_vy              ->push_back(track.vy());
-        //vt_vz              ->push_back(track.vz());
-        vt_rinv            ->push_back(track.rinv());
-        vt_invPt           ->push_back(track.invPt());
-        vt_phi0            ->push_back(track.phi0());
-        vt_cottheta        ->push_back(track.cottheta());
-        vt_z0              ->push_back(track.z0());
-        vt_d0              ->push_back(track.d0());
-        vt_chi2            ->push_back(track.chi2());
-        vt_ndof            ->push_back(track.ndof());
-        vt_synMatchChi2    ->push_back(track.synMatchChi2());
-        vt_synMatchCat     ->push_back(track.synMatchCat());
-        vt_tpId            ->push_back(track.tpId());
-        vt_synTpId         ->push_back(track.synTpId());
-        vt_tower           ->push_back(track.tower());
-        vt_hitBits         ->push_back(track.hitBits());
-        vt_ptSegment       ->push_back(track.ptSegment());
-        vt_roadRef         ->push_back(track.roadRef());
-        vt_combRef         ->push_back(track.combRef());
-        vt_patternRef      ->push_back(track.patternRef());
-        vt_stubRefs        ->push_back(track.stubRefs());
-        vt_principals      ->push_back(track.principals());
+            //vt_px              ->push_back(track.px());
+            //vt_py              ->push_back(track.py());
+            //vt_pz              ->push_back(track.pz());
+            vt_pt              ->push_back(track.pt());
+            vt_eta             ->push_back(track.eta());
+            //vt_phi             ->push_back(track.phi());
+            //vt_vx              ->push_back(track.vx());
+            //vt_vy              ->push_back(track.vy());
+            //vt_vz              ->push_back(track.vz());
+            vt_rinv            ->push_back(track.rinv());
+            vt_invPt           ->push_back(track.invPt());
+            vt_phi0            ->push_back(track.phi0());
+            vt_cottheta        ->push_back(track.cottheta());
+            vt_z0              ->push_back(track.z0());
+            vt_d0              ->push_back(track.d0());
+            vt_chi2            ->push_back(track.chi2());
+            vt_ndof            ->push_back(track.ndof());
+            vt_synMatchChi2    ->push_back(track.synMatchChi2());
+            vt_synMatchCat     ->push_back(track.synMatchCat());
+            vt_tpId            ->push_back(track.tpId());
+            vt_synTpId         ->push_back(track.synTpId());
+            vt_tower           ->push_back(track.tower());
+            vt_hitBits         ->push_back(track.hitBits());
+            vt_ptSegment       ->push_back(track.ptSegment());
+            vt_roadRef         ->push_back(track.roadRef());
+            vt_combRef         ->push_back(track.combRef());
+            vt_patternRef      ->push_back(track.patternRef());
+            vt_stubRefs        ->push_back(track.stubRefs());
+            vt_principals      ->push_back(track.principals());
+        }
+        assert(vt_pt->size() == ntracks);
+
+        ttree_->Fill();
     }
-    assert(vt_pt->size() == ntracks);
-
-    ttree_->Fill();
 }
 
 #endif  // __TTTrackWriter_h__
