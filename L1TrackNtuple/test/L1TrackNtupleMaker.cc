@@ -4,6 +4,8 @@
 //                                                                  //
 //////////////////////////////////////////////////////////////////////
 
+#define JFTEST 1
+
 ////////////////////
 // FRAMEWORK HEADERS
 #include "FWCore/PluginManager/interface/ModuleDef.h"
@@ -64,6 +66,10 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "DataFormats/Math/interface/LorentzVector.h"
+
+#ifdef JFTEST
+#include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/ModuleIdFunctor.h"
+#endif
 
 
 ///////////////
@@ -180,6 +186,12 @@ private:
   std::vector<float>* m_trk_matchtp_dxy;
   std::vector<int>*   m_trk_injet;        //is the track within dR<0.4 of a genjet with pt > 30 GeV?
   std::vector<int>*   m_trk_injet_highpt; //is the track within dR<0.4 of a genjet with pt > 100 GeV?
+
+#ifdef JFTEST
+  std::vector<std::vector<int> >* m_trk_stubrefs;
+  std::vector<std::vector<int> >* m_trk_modids;
+  std::vector<int>*               m_trk_roadref;
+#endif
 
   // all tracking particles
   std::vector<float>* m_tp_pt;
@@ -357,6 +369,12 @@ void L1TrackNtupleMaker::beginJob()
   m_trk_injet = new std::vector<int>;
   m_trk_injet_highpt = new std::vector<int>;
 
+#ifdef JFTEST
+  m_trk_stubrefs = new std::vector<std::vector<int> >;
+  m_trk_modids   = new std::vector<std::vector<int> >;
+  m_trk_roadref  = new std::vector<int>;
+#endif
+
   m_tp_pt     = new std::vector<float>;
   m_tp_eta    = new std::vector<float>;
   m_tp_phi    = new std::vector<float>;
@@ -451,6 +469,12 @@ void L1TrackNtupleMaker::beginJob()
       eventTree->Branch("trk_injet", &m_trk_injet);
       eventTree->Branch("trk_injet_highpt", &m_trk_injet_highpt);
     }
+
+#ifdef JFTEST
+    eventTree->Branch("trk_stubrefs", &m_trk_stubrefs);
+    eventTree->Branch("trk_modids"  , &m_trk_modids);
+    eventTree->Branch("trk_roadref" , &m_trk_roadref);
+#endif
   }
 
   eventTree->Branch("tp_pt",     &m_tp_pt);
@@ -575,6 +599,12 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   m_trk_matchtp_dxy->clear();
   m_trk_injet->clear();
   m_trk_injet_highpt->clear();
+
+#ifdef JFTEST
+  m_trk_stubrefs->clear();
+  m_trk_modids->clear();
+  m_trk_roadref->clear();
+#endif
   
   m_tp_pt->clear();
   m_tp_eta->clear();
@@ -922,6 +952,25 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       m_trk_loose->push_back(tmp_trk_loose);
       m_trk_unknown->push_back(tmp_trk_unknown);
       m_trk_combinatoric->push_back(tmp_trk_combinatoric);
+
+#ifdef JFTEST
+      assert(theStackedGeometry != 0);
+      typedef edm::Ref<edmNew::DetSetVector<TTStub<Ref_PixelDigi_> >, TTStub<Ref_PixelDigi_> > stub_ref_t;
+      const std::vector<stub_ref_t>& tmp_trk_stubrefs = iterL1Track->getStubRefs();
+      ModuleIdFunctor getModuleId;
+      m_trk_stubrefs->push_back(std::vector<int>());  // create empty vector
+      m_trk_modids->push_back(std::vector<int>());    // create empty vector
+      for (unsigned int is=0; is<tmp_trk_stubrefs.size(); is++) {
+          const stub_ref_t& tmp_trk_stubref = tmp_trk_stubrefs.at(is);
+          const StackedTrackerDetId stackDetId(tmp_trk_stubref->getDetId());
+          const DetId geoId0 = theStackedGeometry->idToDet(stackDetId, 0)->geographicalId();
+          const unsigned tmp_trk_modid = getModuleId(geoId0);
+          m_trk_stubrefs->back().push_back(tmp_trk_stubref.key());
+          m_trk_modids->back().push_back(tmp_trk_modid);
+      }
+      unsigned tmp_trk_roadref = iterL1Track->getWedge();  // dirty hack to store track roadRef
+      m_trk_roadref->push_back(tmp_trk_roadref);
+#endif
       
 
       // ----------------------------------------------------------------------------------------------
@@ -1545,5 +1594,10 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
 
 ///////////////////////////
 // DEFINE THIS AS A PLUG-IN
+//DEFINE_FWK_MODULE(L1TrackNtupleMaker);
+
+#ifdef JFTEST
 typedef L1TrackNtupleMaker L1TrackNtupleMaker2;
 DEFINE_FWK_MODULE(L1TrackNtupleMaker2);
+#endif
+
