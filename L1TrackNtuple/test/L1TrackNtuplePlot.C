@@ -6,10 +6,8 @@
 #define JFTEST 1
 
 #ifdef JFTEST
-#include "TrackParametersToTT.h"
-TrackParametersToTT track_parameters_to_tt;
-#include "ModulesToTT.h"
-ModulesToTT modules_to_tt;
+#include "TFileCollection.h"
+#define AMTTNROADS 99999999
 #endif
 
 #include "TROOT.h"
@@ -50,10 +48,6 @@ void makeResidualIntervalPlot( TString type, TString dir, TString variable, TH1F
 
 
 void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=0, int TP_select_eventid=0, float TP_minPt=3.0, float TP_maxPt=100.0, float TP_maxEta=2.4) {
-
-#ifdef JFTEST
-  gROOT->ProcessLine(".L Loader.C+");  // fix missing dictionaries
-#endif
 
   // type:              this is the input file you want to process (minus ".root" extension)
   // TP_select_pdgid:   if non-zero, only select TPs with a given PDG ID
@@ -106,10 +100,20 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   // read ntuples
 #ifdef JFTEST
   TChain* tree = new TChain("AML1TrackNtuple/eventTree");
+  if (type.EndsWith(".root")) {
+    type.ReplaceAll(".root", "");
+    tree->Add(type+".root");
+  } else if (type.EndsWith(".txt")) {
+    TFileCollection fc("fileinfolist", "", type);
+    type.ReplaceAll(".txt", "");
+    tree->AddFileInfoList((TCollection*) fc.GetList());
+  } else {
+    tree->Add(type+".root");
+  }
 #else
   TChain* tree = new TChain("L1TrackNtuple/eventTree");
-#endif
   tree->Add(type+".root");
+#endif
   
   if (tree->GetEntries() == 0) {
     cout << "File doesn't exist or is empty, returning..." << endl;
@@ -155,17 +159,16 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   vector<int>*   trk_injet;
   vector<int>*   trk_injet_highpt;
 
-#ifdef JFTEST
-  vector<vector<int> >* trk_stubrefs;
-  vector<vector<int> >* trk_modids;
-  vector<int>*          trk_roadref;
-#endif
-
   vector<float>* jet_eta;
   vector<float>* jet_pt;
   vector<float>* jet_tp_sumpt;
   vector<float>* jet_matchtrk_sumpt;
   vector<float>* jet_trk_sumpt;
+
+#ifdef JFTEST
+  vector<int>* matchtrk_roadref;
+  vector<int>* trk_roadref;
+#endif
 
 
   TBranch* b_tp_pt;
@@ -200,17 +203,16 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   TBranch* b_trk_injet;
   TBranch* b_trk_injet_highpt;
 
-#ifdef JFTEST
-  TBranch* b_trk_stubrefs;
-  TBranch* b_trk_modids;
-  TBranch* b_trk_roadref;
-#endif
-
   TBranch* b_jet_eta;
   TBranch* b_jet_pt;
   TBranch* b_jet_tp_sumpt;
   TBranch* b_jet_matchtrk_sumpt;
   TBranch* b_jet_trk_sumpt;
+
+#ifdef JFTEST
+  TBranch* b_matchtrk_roadref;
+  TBranch* b_trk_roadref;
+#endif
 
   tp_pt  = 0;
   tp_eta = 0;
@@ -244,17 +246,16 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   trk_injet = 0;
   trk_injet_highpt = 0;
 
-#ifdef JFTEST
-  trk_stubrefs = 0;
-  trk_modids = 0;
-  trk_roadref = 0;
-#endif
-
   jet_eta = 0;
   jet_pt = 0;
   jet_tp_sumpt = 0;
   jet_matchtrk_sumpt = 0;
   jet_trk_sumpt = 0;
+
+#ifdef JFTEST
+  matchtrk_roadref = 0;
+  trk_roadref = 0;
+#endif
 
 
   tree->SetBranchAddress("tp_pt",     &tp_pt,     &b_tp_pt);
@@ -303,12 +304,6 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   tree->SetBranchAddress("trk_injet",   &trk_injet,   &b_trk_injet);
   tree->SetBranchAddress("trk_injet_highpt",   &trk_injet_highpt,   &b_trk_injet_highpt);
 
-#ifdef JFTEST
-  tree->SetBranchAddress("trk_stubrefs", &trk_stubrefs, &b_trk_stubrefs);
-  tree->SetBranchAddress("trk_modids"  , &trk_modids  , &b_trk_modids);
-  tree->SetBranchAddress("trk_roadref" , &trk_roadref , &b_trk_roadref);
-#endif
-
   tree->SetBranchAddress("jet_eta", &jet_eta, &b_jet_eta);
   tree->SetBranchAddress("jet_pt",  &jet_pt,  &b_jet_pt);
   tree->SetBranchAddress("jet_tp_sumpt",   &jet_tp_sumpt,   &b_jet_tp_sumpt);
@@ -316,6 +311,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   if (doLooseMatch) tree->SetBranchAddress("jet_loosematchtrk_sumpt",  &jet_matchtrk_sumpt, &b_jet_matchtrk_sumpt);
   else tree->SetBranchAddress("jet_matchtrk_sumpt",  &jet_matchtrk_sumpt, &b_jet_matchtrk_sumpt);
   
+#ifdef JFTEST
+  tree->SetBranchAddress("matchtrk_roadref", &matchtrk_roadref, &b_matchtrk_roadref);
+  tree->SetBranchAddress("trk_roadref", &trk_roadref, &b_trk_roadref);
+#endif
+
 
   // ----------------------------------------------------------------------------------------------------------------
   // histograms
@@ -677,14 +677,12 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
     // ----------------------------------------------------------------------------------------------------------------
     // track loop for total rates
     for (int it=0; it<(int)trk_pt->size(); it++) {
-
-#ifdef JFTEST
-      const std::vector<int>& modules = trk_modids->at(it);
-      int aux_tt = modules_to_tt.get_tt(modules);
-      if (aux_tt != 25)
-        continue;
-#endif
            
+#ifdef JFTEST
+      if (trk_roadref->at(it) >= AMTTNROADS) continue;
+      if (trk_chi2->at(it) / (2*trk_nstub->at(it)-4) >= 14.6) continue;
+#endif
+
       // only look at tracks in (ttbar) jets
       if (TP_select_injet == 1 && trk_injet->at(it) == 0) continue;       
       if (TP_select_injet == 2 && trk_injet_highpt->at(it) == 0) continue;       
@@ -707,15 +705,6 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
     // ----------------------------------------------------------------------------------------------------------------
     // tracking particle loop
     for (int it=0; it<(int)tp_pt->size(); it++) {
-
-#ifdef JFTEST
-      float fcharge = (tp_pdgid->at(it) > 0) ? 1 : -1;
-      if (abs(tp_pdgid->at(it)) == 11 || abs(tp_pdgid->at(it)) == 13 || abs(tp_pdgid->at(it)) == 15 || abs(tp_pdgid->at(it)) == 3112 || abs(tp_pdgid->at(it)) == 3312 || abs(tp_pdgid->at(it)) == 3334 || abs(tp_pdgid->at(it)) == 5132)
-        fcharge = (tp_pdgid->at(it) > 0) ? -1 : 1;
-      int aux_tt = track_parameters_to_tt.get_tt(tp_phi->at(it), fcharge/tp_pt->at(it), tp_eta->at(it), tp_z0->at(it));
-      if (aux_tt != 25)
-        continue;
-#endif
 
       // only look at TPs in (ttbar) jets
       if (TP_select_injet == 1 && tp_injet->at(it) == 0) continue;       
@@ -777,6 +766,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
       // use only tracks with min X stubs
       if (matchtrk_nstub->at(it) < L1Tk_minNstub) continue;
 
+
+#ifdef JFTEST
+      if (matchtrk_roadref->at(it) >= AMTTNROADS) continue;
+      if (matchtrk_chi2->at(it) / (2*matchtrk_nstub->at(it)-4) >= 14.6) continue;
+#endif
 
       // ----------------------------------------------------------------------------------------------------------------
       // fill chi2 & chi2/dof histograms before making chi2 cut
