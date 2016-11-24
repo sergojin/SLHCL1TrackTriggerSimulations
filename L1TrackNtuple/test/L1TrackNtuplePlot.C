@@ -8,6 +8,7 @@
 #ifdef JFTEST
 #include "TFileCollection.h"
 #define AMTTNROADS 99999999
+//#define DOTRACKLET 1
 #endif
 
 #include "TROOT.h"
@@ -99,7 +100,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   // ----------------------------------------------------------------------------------------------------------------
   // read ntuples
 #ifdef JFTEST
+#ifndef DOTRACKLET
   TChain* tree = new TChain("AML1TrackNtuple/eventTree");
+#else
+  TChain* tree = new TChain("L1TrackNtuple/eventTree");
+#endif
   if (type.EndsWith(".root")) {
     type.ReplaceAll(".root", "");
     tree->Add(type+".root");
@@ -1527,6 +1532,14 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   // output file for histograms
   // -------------------------------------------------------------------------------------------
  
+#ifdef JFTEST
+#if AMTTNROADS == 99999999
+  type = type+Form("_WithoutTruncation");
+#else
+  type = type+Form("_WithTruncation");
+#endif
+#endif
+
   if (TP_select_pdgid != 0) {
     char pdgidtxt[500];
     sprintf(pdgidtxt,"_pdgid%i",TP_select_pdgid);
@@ -1547,7 +1560,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   TCanvas c;
 
 #ifdef JFTEST
+#ifndef DOTRACKLET
   TString DIR = "TrkPlots2/";
+#else
+  TString DIR = "TrkPlots/";
+#endif
 #else
   TString DIR = "TrkPlots/";
 #endif

@@ -1,0 +1,5 @@
+root://cmseos:1094//store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU200_foo/ntuple_TTI_1.root
+root://cmseos:1094//store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU200_foo/ntuple_TTI_2.root
+root://cmseos:1094//store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU200_foo/ntuple_TTI_3.root
+root://cmseos:1094//store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU200_foo/ntuple_TTI_4.root
+root://cmseos:1094//store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU200_foo/ntuple_TTI_5.root

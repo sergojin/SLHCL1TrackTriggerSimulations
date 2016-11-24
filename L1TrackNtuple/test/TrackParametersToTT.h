@@ -14,7 +14,8 @@
   public:
     int get_tt(double phi, double invPt, double eta, double z0) {
       constexpr double max_eta = 2.2;
-      constexpr double max_z0 = 15.; // [cm]
+      //constexpr double max_z0 = 15.; // [cm]
+      constexpr double max_z0 = 30.; // [cm]
       //constexpr double max_invPt = 1./3;  // [1/GeV]
       constexpr double max_invPt = 999999.;  // [1/GeV]
       double etaStar = get_etaStar_from_eta(eta, z0, invPt);
