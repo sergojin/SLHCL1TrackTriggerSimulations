@@ -6,6 +6,13 @@
 
 #define JFTEST 1
 
+#ifdef JFTEST
+#include "ModuleIdFunctor.h"
+#include "TrackParametersToTT.h"
+#include "ModulesToTT.h"
+#define AMTT 25
+#endif
+
 ////////////////////
 // FRAMEWORK HEADERS
 #include "FWCore/PluginManager/interface/ModuleDef.h"
@@ -66,10 +73,6 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "DataFormats/Math/interface/LorentzVector.h"
-
-#ifdef JFTEST
-#include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/ModuleIdFunctor.h"
-#endif
 
 
 ///////////////
@@ -187,12 +190,6 @@ private:
   std::vector<int>*   m_trk_injet;        //is the track within dR<0.4 of a genjet with pt > 30 GeV?
   std::vector<int>*   m_trk_injet_highpt; //is the track within dR<0.4 of a genjet with pt > 100 GeV?
 
-#ifdef JFTEST
-  std::vector<std::vector<int> >* m_trk_stubrefs;
-  std::vector<std::vector<int> >* m_trk_modids;
-  std::vector<int>*               m_trk_roadref;
-#endif
-
   // all tracking particles
   std::vector<float>* m_tp_pt;
   std::vector<float>* m_tp_eta;
@@ -263,6 +260,12 @@ private:
   std::vector<float>* m_jet_loosematchtrk_sumpt;
   std::vector<float>* m_jet_trk_sumpt;
   
+#ifdef JFTEST
+  std::vector<int>* m_trk_roadref;
+  std::vector<int>* m_matchtrk_roadref;
+  std::vector<int>* m_loosematchtrk_roadref;
+#endif
+
 
 };
 
@@ -369,12 +372,6 @@ void L1TrackNtupleMaker::beginJob()
   m_trk_injet = new std::vector<int>;
   m_trk_injet_highpt = new std::vector<int>;
 
-#ifdef JFTEST
-  m_trk_stubrefs = new std::vector<std::vector<int> >;
-  m_trk_modids   = new std::vector<std::vector<int> >;
-  m_trk_roadref  = new std::vector<int>;
-#endif
-
   m_tp_pt     = new std::vector<float>;
   m_tp_eta    = new std::vector<float>;
   m_tp_phi    = new std::vector<float>;
@@ -438,6 +435,12 @@ void L1TrackNtupleMaker::beginJob()
   m_jet_loosematchtrk_sumpt = new std::vector<float>;
   m_jet_trk_sumpt = new std::vector<float>;
 
+#ifdef JFTEST
+  m_trk_roadref  = new std::vector<int>;
+  m_matchtrk_roadref  = new std::vector<int>;
+  m_loosematchtrk_roadref  = new std::vector<int>;
+#endif
+
 
 
   // ntuple
@@ -469,12 +472,6 @@ void L1TrackNtupleMaker::beginJob()
       eventTree->Branch("trk_injet", &m_trk_injet);
       eventTree->Branch("trk_injet_highpt", &m_trk_injet_highpt);
     }
-
-#ifdef JFTEST
-    eventTree->Branch("trk_stubrefs", &m_trk_stubrefs);
-    eventTree->Branch("trk_modids"  , &m_trk_modids);
-    eventTree->Branch("trk_roadref" , &m_trk_roadref);
-#endif
   }
 
   eventTree->Branch("tp_pt",     &m_tp_pt);
@@ -556,6 +553,12 @@ void L1TrackNtupleMaker::beginJob()
     eventTree->Branch("jet_trk_sumpt", &m_jet_trk_sumpt);
   }
 
+#ifdef JFTEST
+    eventTree->Branch("trk_roadref", &m_trk_roadref);
+    eventTree->Branch("matchtrk_roadref", &m_matchtrk_roadref);
+    eventTree->Branch("loosematchtrk_roadref", &m_loosematchtrk_roadref);
+#endif
+
 }
 
 
@@ -599,12 +602,6 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   m_trk_matchtp_dxy->clear();
   m_trk_injet->clear();
   m_trk_injet_highpt->clear();
-
-#ifdef JFTEST
-  m_trk_stubrefs->clear();
-  m_trk_modids->clear();
-  m_trk_roadref->clear();
-#endif
   
   m_tp_pt->clear();
   m_tp_eta->clear();
@@ -669,6 +666,18 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   m_jet_loosematchtrk_sumpt->clear();
   m_jet_trk_sumpt->clear();
 
+#ifdef JFTEST
+  m_trk_roadref->clear();
+  m_matchtrk_roadref->clear();
+  m_loosematchtrk_roadref->clear();
+
+  bool PleaseLoadStubs = true;
+
+  TrackParametersToTT trackParametersToTT;
+  ModulesToTT modulesToTT;
+  ModuleIdFunctor getModuleId;
+#endif
+
 
   //-----------------------------------------------------------------------------------------------
   // retrieve various containers
@@ -681,7 +690,11 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   
   // L1 stubs
   edm::Handle< edmNew::DetSetVector< TTStub< Ref_PixelDigi_ > > > TTStubHandle;
+#ifdef JFTEST
+  if (PleaseLoadStubs) {
+#else
   if (SaveStubs) {
+#endif
     if (DebugMode) cout << "get TTStubs" << endl;
     iEvent.getByLabel("TTStubsFromPixelDigis", "StubAccepted", TTStubHandle);
   }
@@ -818,7 +831,11 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   // geomtry 
   edm::ESHandle< StackedTrackerGeometry >         StackedGeometryHandle;
   const StackedTrackerGeometry*                   theStackedGeometry = 0;
+#ifdef JFTEST
+  if (PleaseLoadStubs) {
+#else
   if (SaveStubs) {  
+#endif
     iSetup.get< StackedTrackerGeometryRecord >().get(StackedGeometryHandle);
     theStackedGeometry = StackedGeometryHandle.product();
   }
@@ -827,7 +844,11 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
   edm::ESHandle< MagneticField > magneticFieldHandle;
   iSetup.get< IdealMagneticFieldRecord >().get(magneticFieldHandle);
   double mMagneticFieldStrength = 0;
+#ifdef JFTEST
+  if (PleaseLoadStubs) {
+#else
   if (SaveStubs) {  
+#endif
     const MagneticField* theMagneticField = magneticFieldHandle.product();
     mMagneticFieldStrength = theMagneticField->inTesla(GlobalPoint(0,0,0)).z();
   }
@@ -939,6 +960,24 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
 	if (tmp_trk_combinatoric) cout << " (is combinatoric)" << endl; 
       }
       
+#ifdef JFTEST
+      assert(theStackedGeometry != 0);
+      typedef edm::Ref<edmNew::DetSetVector<TTStub<Ref_PixelDigi_> >, TTStub<Ref_PixelDigi_> > stub_ref_t;
+      const std::vector<stub_ref_t>& tmp_trk_stubrefs = iterL1Track->getStubRefs();
+      std::vector<int> tmp_trk_stubmodids;
+      for (unsigned int is=0; is<tmp_trk_stubrefs.size(); is++) {
+          const stub_ref_t& tmp_trk_stubref = tmp_trk_stubrefs.at(is);
+          const StackedTrackerDetId stackDetId(tmp_trk_stubref->getDetId());
+          const DetId geoId0 = theStackedGeometry->idToDet(stackDetId, 0)->geographicalId();
+          const int tmp_trk_stubmodid = getModuleId(geoId0);
+          tmp_trk_stubmodids.push_back(tmp_trk_stubmodid);
+      }
+      int aux_tt = modulesToTT.get_tt(tmp_trk_stubmodids);
+      if (aux_tt != AMTT) continue;
+
+      m_trk_roadref->push_back(iterL1Track->getWedge());  // dirty hack to store track roadRef
+#endif
+
       m_trk_pt ->push_back(tmp_trk_pt);
       m_trk_eta->push_back(tmp_trk_eta);
       m_trk_phi->push_back(tmp_trk_phi);
@@ -952,25 +991,6 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       m_trk_loose->push_back(tmp_trk_loose);
       m_trk_unknown->push_back(tmp_trk_unknown);
       m_trk_combinatoric->push_back(tmp_trk_combinatoric);
-
-#ifdef JFTEST
-      assert(theStackedGeometry != 0);
-      typedef edm::Ref<edmNew::DetSetVector<TTStub<Ref_PixelDigi_> >, TTStub<Ref_PixelDigi_> > stub_ref_t;
-      const std::vector<stub_ref_t>& tmp_trk_stubrefs = iterL1Track->getStubRefs();
-      ModuleIdFunctor getModuleId;
-      m_trk_stubrefs->push_back(std::vector<int>());  // create empty vector
-      m_trk_modids->push_back(std::vector<int>());    // create empty vector
-      for (unsigned int is=0; is<tmp_trk_stubrefs.size(); is++) {
-          const stub_ref_t& tmp_trk_stubref = tmp_trk_stubrefs.at(is);
-          const StackedTrackerDetId stackDetId(tmp_trk_stubref->getDetId());
-          const DetId geoId0 = theStackedGeometry->idToDet(stackDetId, 0)->geographicalId();
-          const unsigned tmp_trk_modid = getModuleId(geoId0);
-          m_trk_stubrefs->back().push_back(tmp_trk_stubref.key());
-          m_trk_modids->back().push_back(tmp_trk_modid);
-      }
-      unsigned tmp_trk_roadref = iterL1Track->getWedge();  // dirty hack to store track roadRef
-      m_trk_roadref->push_back(tmp_trk_roadref);
-#endif
       
 
       // ----------------------------------------------------------------------------------------------
@@ -1091,6 +1111,11 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
 
     if (tmp_tp_pt < TP_minPt) continue;
     if (fabs(tmp_tp_eta) > TP_maxEta) continue;
+
+#ifdef JFTEST
+    int aux_tt = trackParametersToTT.get_tt(iterTP->phi(), float(iterTP->charge())/iterTP->pt(), iterTP->eta(), iterTP->vz());
+    if (aux_tt != AMTT) continue;
+#endif
 
 
     // ----------------------------------------------------------------------------------------------
@@ -1254,6 +1279,21 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
 	if (MCTruthTTTrackHandle->isLooselyGenuine(matchedTracks.at(it))) tmp_trk_loose = true;
 	if (!tmp_trk_loose) continue;
 
+#ifdef JFTEST
+      typedef edm::Ref<edmNew::DetSetVector<TTStub<Ref_PixelDigi_> >, TTStub<Ref_PixelDigi_> > stub_ref_t;
+      const std::vector<stub_ref_t>& tmp_trk_stubrefs = matchedTracks.at(it)->getStubRefs();
+      std::vector<int> tmp_trk_stubmodids;
+      for (unsigned int is=0; is<tmp_trk_stubrefs.size(); is++) {
+          const stub_ref_t& tmp_trk_stubref = tmp_trk_stubrefs.at(is);
+          const StackedTrackerDetId stackDetId(tmp_trk_stubref->getDetId());
+          const DetId geoId0 = theStackedGeometry->idToDet(stackDetId, 0)->geographicalId();
+          const int tmp_trk_stubmodid = getModuleId(geoId0);
+          tmp_trk_stubmodids.push_back(tmp_trk_stubmodid);
+      }
+      int aux_tt = modulesToTT.get_tt(tmp_trk_stubmodids);
+      if (aux_tt != AMTT) continue;
+#endif
+
 
 	if (DebugMode) {
 	  if (MCTruthTTTrackHandle->findTrackingParticlePtr(matchedTracks.at(it)).isNull()) {
@@ -1415,6 +1455,11 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
     m_loosematchtrk_chi2 ->push_back(tmp_loosematchtrk_chi2);
     m_loosematchtrk_consistency->push_back(tmp_loosematchtrk_consistency);
     m_loosematchtrk_nstub->push_back(tmp_loosematchtrk_nstub);
+
+#ifdef JFTEST
+    m_matchtrk_roadref->push_back(nMatch > 0 ? matchedTracks.at(i_track)->getWedge() : -999);
+    m_loosematchtrk_roadref->push_back(nLooseMatch > 0 ? matchedTracks.at(i_loosetrack)->getWedge() : -999);
+#endif
 
 
     // ----------------------------------------------------------------------------------------------
