@@ -16,7 +16,13 @@ defaultInputFiles = [
 ]
 options.setDefault('inputFiles', defaultInputFiles)
 options.setDefault('outputFile', 'ntuple_TTI.root')
+options.register('selection', '', VarParsing.multiplicity.singleton, VarParsing.varType.string, "selection")
 options.parseArguments()
+
+if   options.selection == 'pdgid11' :  myprocess = 11
+elif options.selection == 'pdgid13' :  myprocess = 13
+elif options.selection == 'pdgid211':  myprocess = 211
+else                                :  myprocess = 1
  
  
 ############################################################
@@ -121,11 +127,11 @@ process.pL1TkPrimaryVertexMC = cms.Path( process.L1TkPrimaryVertexMC )
 ############################################################
 
 process.L1TrackNtuple = cms.EDAnalyzer('L1TrackNtupleMaker2',
-                                       MyProcess = cms.int32(1),
+                                       MyProcess = cms.int32(myprocess),
                                        Slim = cms.bool(True),            # only keep the branches we really need
                                        DebugMode = cms.bool(False),      # printout lots of debug statements
                                        SaveAllTracks = cms.bool(True),   # save *all* L1 tracks, not just truth matched to primary particle
-                                       SaveStubs = cms.bool(True),       # save some info for *all* stubs
+                                       SaveStubs = cms.bool(False),      # save some info for *all* stubs
                                        L1Tk_nPar = cms.int32(4),         # use 4 or 5-parameter L1 track fit ??
                                        L1Tk_minNStub = cms.int32(4),     # L1 tracks with >= 4 stubs
                                        TP_minNStub = cms.int32(4),       # require TP to have >= X number of stubs associated with it
