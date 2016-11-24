@@ -68,6 +68,12 @@ void TTStubWriterT<T>::init(TTree* intree, TString out) {
 
     tfile_->mkdir("ntupler")->cd();
     ttree_ = (TTree*) intree->CloneTree(0); // Do not copy the data yet
+    //ttree_ = (TTree*) intree->GetTree()->CloneTree(0); // Do not copy the data yet
+    if (ttree_ == 0) {
+        TString msg = "Failed to clone the tree";
+        throw std::invalid_argument(msg.Data());
+    }
+
 }
 
 #endif  // __TTStubWriter_h__
