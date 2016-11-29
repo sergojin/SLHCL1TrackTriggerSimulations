@@ -725,7 +725,12 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
 
     if (DebugMode) cout << "getting L1/MC primary vertex" << endl;
     edm::Handle< std::vector<L1TkPrimaryVertex> > L1PVHandle;
+#ifdef JFTEST
+    edm::InputTag L1TkPrimaryVertexTag = config.getParameter<edm::InputTag>("L1TkPrimaryVertexTag");
+    iEvent.getByLabel(L1TkPrimaryVertexTag, L1PVHandle);
+#else
     iEvent.getByLabel("L1TkPrimaryVertex","", L1PVHandle);
+#endif
     
     edm::Handle< std::vector<L1TkPrimaryVertex> > MCPVHandle;
     iEvent.getByLabel("L1TkPrimaryVertexMC","", MCPVHandle);

@@ -162,6 +162,7 @@ process.L1TrackNtuple = cms.EDAnalyzer('L1TrackNtupleMaker2',
                                        TrackingInJets = cms.bool(True),
                                        ## save primary vertex information? (--> requires that you ran that above)
                                        PrimaryVertex = cms.bool(True),
+                                       L1TkPrimaryVertexTag = cms.InputTag("L1TkPrimaryVertex", ""),
                                        )
 process.ana = cms.Path(process.L1TrackNtuple)
 
@@ -175,9 +176,14 @@ process.AMTTTrackAssociatorFromPixelDigis = process.TTTrackAssociatorFromPixelDi
     TTTracks = cms.VInputTag(cms.InputTag("edmHacker","AMTTTracks")),
 )
 process.AMTrackTrigger = cms.Sequence(process.edmHacker+process.AMTTTrackAssociatorFromPixelDigis)
+## Primary vertex producer
+process.AML1TkPrimaryVertex = process.L1TkPrimaryVertex.clone()
+process.AML1TkPrimaryVertex.L1TrackInputTag = cms.InputTag("edmHacker","AMTTTracks")
+## Ntuple maker
 process.AML1TrackNtuple = process.L1TrackNtuple.clone(
     L1TrackInputTag = cms.InputTag("edmHacker", "AMTTTracks"),               # TTTrack input
     MCTruthTrackInputTag = cms.InputTag("AMTTTrackAssociatorFromPixelDigis", "AMTTTracks"), # MCTruth input
+    L1TkPrimaryVertexTag = cms.InputTag("AML1TkPrimaryVertex", ""),
 )
 process.anna = cms.Path(process.AMTrackTrigger*process.AML1TrackNtuple)
 
