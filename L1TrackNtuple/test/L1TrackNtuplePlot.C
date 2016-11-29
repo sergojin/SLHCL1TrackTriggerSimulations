@@ -733,11 +733,8 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
 
     for (int it=0; it<(int)trk_pt->size(); it++) {
 
-#ifdef JFTEST
-#ifndef DOTRACKLET
+#if defined(JFTEST) && !defined(DOTRACKLET)
       if (trk_roadref->at(it) >= AMTTNROADS) continue;
-#endif
-      if (trk_chi2->at(it) / (2*trk_nstub->at(it)-4) >= 14.6) continue;
 #endif
            
       // only look at tracks in (ttbar) jets ?
@@ -836,11 +833,8 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
       if (matchtrk_nstub->at(it) < L1Tk_minNstub) continue;
 
 
-#ifdef JFTEST
-#ifndef DOTRACKLET
+#if defined(JFTEST) && !defined(DOTRACKLET)
       if (matchtrk_roadref->at(it) >= AMTTNROADS) continue;
-#endif
-      if (matchtrk_chi2->at(it) / (2*matchtrk_nstub->at(it)-4) >= 14.6) continue;
 #endif
 
       // ----------------------------------------------------------------------------------------------------------------
@@ -1733,12 +1727,8 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   char ctxt[500];
   TCanvas c;
 
-#ifdef JFTEST
-#ifndef DOTRACKLET
+#if defined(JFTEST) && !defined(DOTRACKLET)
   TString DIR = "TrkPlots2/";
-#else
-  TString DIR = "TrkPlots/";
-#endif
 #else
   TString DIR = "TrkPlots/";
 #endif

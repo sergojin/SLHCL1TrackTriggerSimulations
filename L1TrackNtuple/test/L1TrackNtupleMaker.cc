@@ -975,6 +975,9 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       int aux_tt = modulesToTT.get_tt(tmp_trk_stubmodids);
       if (aux_tt != AMTT) continue;
 
+      float aux_chi2dof = (iterL1Track->getChi2(L1Tk_nPar)) / (2*tmp_trk_nstub - L1Tk_nPar);
+      if (aux_chi2dof >= 14.6) continue;
+
       m_trk_roadref->push_back(iterL1Track->getWedge());  // dirty hack to store track roadRef
 #endif
 
@@ -1292,6 +1295,9 @@ void L1TrackNtupleMaker::analyze(const edm::Event& iEvent, const edm::EventSetup
       }
       int aux_tt = modulesToTT.get_tt(tmp_trk_stubmodids);
       if (aux_tt != AMTT) continue;
+
+      float aux_chi2dof = (matchedTracks.at(it)->getChi2(L1Tk_nPar)) / (2*matchedTracks.at(it)->getStubRefs().size() - L1Tk_nPar);
+      if (aux_chi2dof >= 14.6) continue;
 #endif
 
 
