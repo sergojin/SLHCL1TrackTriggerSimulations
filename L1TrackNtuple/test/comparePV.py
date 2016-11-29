@@ -87,20 +87,18 @@ def mySmallText(x, y, color, text):
   l.SetTextColor(color);
   l.DrawLatex(x,y,text);
 
-def getAllHistogramsFromFile( what, sample, ptRange, pdgid ):
+def getAllHistogramsFromFile( what ):
 
   # Make list of input trees
   inputFileNames = [];
-  # output_TTbar_PU200_WithTruncation_injet_KF4ParamsComb.root
-  # inputFileNameTemplate = "output_Hist_{sample}_{PU}{ptRange}{pdg}_{trunc}Truncation{userLabel}.root"
-  inputFileNameTemplate = "output_{sample}{ptRange}_PU{PU}_{trunc}Truncation_{pdg}{userLabel}.root"
-  inputFileNames.append( inputFileNameTemplate.format(sample = sample, PU = PUtypes[0], ptRange=ptRangeTypes[ptRange], pdg=pdgIdTypes[pdgid], trunc = 'With', userLabel=userLabel ) )
-  inputFileNames.append( inputFileNameTemplate.format(sample = sample, PU = PUtypes[1], ptRange=ptRangeTypes[ptRange], pdg=pdgIdTypes[pdgid], trunc = 'With', userLabel=userLabel ) )
-  inputFileNames.append( inputFileNameTemplate.format(sample = sample, PU = PUtypes[2], ptRange=ptRangeTypes[ptRange], pdg=pdgIdTypes[pdgid], trunc = 'With', userLabel=userLabel ) )
-  inputFileNames.append( inputFileNameTemplate.format(sample = sample, PU = PUtypes[0], ptRange=ptRangeTypes[ptRange], pdg=pdgIdTypes[pdgid], trunc = 'Without', userLabel=userLabel ) )
-  inputFileNames.append( inputFileNameTemplate.format(sample = sample, PU = PUtypes[1], ptRange=ptRangeTypes[ptRange], pdg=pdgIdTypes[pdgid], trunc = 'Without', userLabel=userLabel ) )
-  inputFileNames.append( inputFileNameTemplate.format(sample = sample, PU = PUtypes[2], ptRange=ptRangeTypes[ptRange], pdg=pdgIdTypes[pdgid], trunc = 'Without', userLabel=userLabel ) )
-
+  inputFileNameTemplate = "output_L1PV_TTbar_PU{PU}_{trunc}Truncation{userLabel}.root"
+  inputFileNames.append( inputFileNameTemplate.format(PU = PUtypes[0], trunc = 'With', userLabel=userLabel ) )
+  inputFileNames.append( inputFileNameTemplate.format(PU = PUtypes[1], trunc = 'With', userLabel=userLabel ) )
+  inputFileNames.append( inputFileNameTemplate.format(PU = PUtypes[2], trunc = 'With', userLabel=userLabel ) )
+  inputFileNames.append( inputFileNameTemplate.format(PU = PUtypes[0], trunc = 'Without', userLabel=userLabel ) )
+  inputFileNames.append( inputFileNameTemplate.format(PU = PUtypes[1], trunc = 'Without', userLabel=userLabel ) )
+  inputFileNames.append( inputFileNameTemplate.format(PU = PUtypes[2], trunc = 'Without', userLabel=userLabel ) )
+  print inputFileNames
   # Get trees from files
   inputFiles=[];
   for i in range(0,len(inputFileNames)):
@@ -108,7 +106,7 @@ def getAllHistogramsFromFile( what, sample, ptRange, pdgid ):
       inputFiles.append(r.TFile(inputFileNames[i]))
     else:
       inputFiles.append(None)
-
+  print inputFiles
   histograms = {
   'PU0_wt' : getHistogramFromFile(inputFiles[0], what),
   'PU140_wt' : getHistogramFromFile(inputFiles[1], what),
@@ -139,7 +137,7 @@ def drawHistogramWithOption(h,drawOption):
     drawOption +=', same'
   return drawOption
 
-def setupLegend(sample, histograms, PULabels):
+def setupLegend( histograms, PULabels):
   legx = 0.25;
   legy = 0.22;
   r.gPad.cd()
@@ -170,7 +168,7 @@ def setupLegend(sample, histograms, PULabels):
 
 # ----------------------------------------------------------------------------------------------------------------
 # Main script
-def compareEfficiency(what, sample, ptRange=0, pdgid=0):
+def comparePV(what):
   
   SetPlotStyle()
   # Labels for the plots
@@ -178,7 +176,7 @@ def compareEfficiency(what, sample, ptRange=0, pdgid=0):
   ptRangeLabels = ["2 < P_{T} < 8 GeV","P_{T} > 8 GeV"]
 
   # Get histograms
-  histograms = getAllHistogramsFromFile( what, sample, ptRange, pdgid )
+  histograms = getAllHistogramsFromFile( what )
 
   canvas = r.TCanvas()
 
@@ -212,44 +210,22 @@ def compareEfficiency(what, sample, ptRange=0, pdgid=0):
   r.gPad.SetGridy();
 
   # Make the legend
-  l = setupLegend(sample,histograms,PULabels)
+  l = setupLegend(histograms,PULabels)
   l.Draw()
 
   # Save canvas
-  outputDir = 'OverlayPlots{userLabel}'.format(userLabel=userLabel)
-  if not os.path.isdir(outputDir):
-    os.mkdir(outputDir)
-  outputFileName = "{outputDir}/{sample}_{what}.pdf".format( outputDir=outputDir, sample = sample, what=what )
-  if sample == 'TTbar':
-    if pdgid == 13:
-      outputFileName = "{outputDir}/{sample}_muons_{what}.pdf".format( outputDir=outputDir, sample = sample, what=what )
-    elif pdgid == 1:
-      outputFileName = "{outputDir}/{sample}_injet_{what}.pdf".format( outputDir=outputDir, sample = sample, what=what )
-    elif pdgid == 2:
-      outputFileName = "{outputDir}/{sample}_injet_highpt_{what}.pdf".format( outputDir=outputDir, sample = sample, what=what )
+  if not os.path.isdir('OverlayPlots'):
+    os.mkdir('OverlayPlots')
+  outputFileName = "OverlayPlots/PV_{what}.pdf".format( what=what )
   canvas.Print(outputFileName);
 
 if __name__ == '__main__':
   r.gROOT.SetBatch()
 
-  for pdg in [1,2,13]:
-    compareEfficiency("eff_pt_L","TTbar",0,pdg)
-    compareEfficiency("eff_pt_H","TTbar",0,pdg)
-    compareEfficiency("eff_eta_L","TTbar",0,pdg)
-    compareEfficiency("eff_eta_H","TTbar",0,pdg)
-    compareEfficiency("eff_pt","TTbar",0,pdg)
-    compareEfficiency("eff_eta","TTbar",0,pdg)
+  comparePV("eff1")
+  comparePV("zres_vsz")
 
-  samplePdg = {
-  'Muon' : 13,
-  'Electron' : 11,
-  'Pion' : 211
-  }
-  for sample, pdg in samplePdg.iteritems():
-    for ptRange in ['L','H']:
-      compareEfficiency("eff_pt_"+ptRange,sample,ptRange,pdg)
-      compareEfficiency("eff_eta_"+ptRange,sample,ptRange,pdg)
 
-  compareEfficiency("eff_z0_L",'MuonFLATBS','L',13)
-  compareEfficiency("eff_z0_H",'MuonFLATBS','H',13)
+
+
 
