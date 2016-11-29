@@ -1,3 +1,11 @@
+#define JFTEST 1
+
+#ifdef JFTEST
+#include "TFileCollection.h"
+#define AMTTNROADS 99999999
+//#define DOTRACKLET 1
+#endif
+
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TLatex.h"
@@ -41,8 +49,26 @@ void PlotL1PV(TString name) {
 
 
   // ----------------------------------------------------------------------------------------------------------------
+#ifdef JFTEST
+#ifndef DOTRACKLET
+  TChain* tree = new TChain("AML1TrackNtuple/eventTree");
+#else
+  TChain* tree = new TChain("L1TrackNtuple/eventTree");
+#endif
+  if (name.EndsWith(".root")) {
+    name.ReplaceAll(".root", "");
+    tree->Add(name+".root");
+  } else if (name.EndsWith(".txt")) {
+    TFileCollection fc("fileinfolist", "", name);
+    name.ReplaceAll(".txt", "");
+    tree->AddFileInfoList((TCollection*) fc.GetList());
+  } else {
+    tree->Add(name+".root");
+  }
+#else
   TChain* tree = new TChain("L1TrackNtuple/eventTree");
   tree->Add(name+".root");
+#endif
 
 
   // ----------------------------------------------------------------------------------------------------------------
@@ -123,7 +149,11 @@ void PlotL1PV(TString name) {
   //
   // Output file
   // 
+#ifdef JFTEST
+  TFile* fout = new TFile("output_L1PV_"+name+"_WithoutTruncation"+".root","recreate");
+#else
   TFile* fout = new TFile("output_L1PV_"+inputFile+"_"+fitter+".root","recreate");
+#endif
 
   // ----------------------------------------------------------------------------------------------------------------
   // write/plot histograms

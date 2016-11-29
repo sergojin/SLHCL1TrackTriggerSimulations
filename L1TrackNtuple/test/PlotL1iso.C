@@ -1,3 +1,11 @@
+#define JFTEST 1
+
+#ifdef JFTEST
+#include "TFileCollection.h"
+#define AMTTNROADS 99999999
+//#define DOTRACKLET 1
+#endif
+
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TLatex.h"
@@ -43,8 +51,26 @@ void PlotL1iso(TString name) {
   
   // ----------------------------------------------------------------------------------------------------------------
   // read ntuples
+#ifdef JFTEST
+#ifndef DOTRACKLET
+  TChain* tree = new TChain("AML1TrackNtuple/eventTree");
+#else
+  TChain* tree = new TChain("L1TrackNtuple/eventTree");
+#endif
+  if (name.EndsWith(".root")) {
+    name.ReplaceAll(".root", "");
+    tree->Add(name+".root");
+  } else if (name.EndsWith(".txt")) {
+    TFileCollection fc("fileinfolist", "", name);
+    name.ReplaceAll(".txt", "");
+    tree->AddFileInfoList((TCollection*) fc.GetList());
+  } else {
+    tree->Add(name+".root");
+  }
+#else
   TChain* tree = new TChain("L1TrackNtuple/eventTree");
   tree->Add(name+".root");
+#endif
   
   if (tree->GetEntries() == 0) {
     cout << "File doesn't exist or is empty, returning..." << endl;
@@ -252,7 +278,11 @@ void PlotL1iso(TString name) {
   //
   // Output file
   // 
+#ifdef JFTEST
+  TFile* fout = new TFile("output_L1Iso_"+name+"_WithoutTruncation"+".root","recreate");
+#else
   TFile* fout = new TFile("output_L1Iso_"+inputFile+"_"+fitter+".root","recreate");
+#endif
 
   TGraph* g_eff = new TGraph(100,passIso_nonprompt,passIso_prompt);
   TH2F* h_dummy = new TH2F("dummy", "; efficiency (non-prompt #mu); efficiency (prompt #mu)",90,0.1,1.0,10,0.9,1.0);
