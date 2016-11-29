@@ -21,3 +21,6 @@ ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAna
 ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU0_part/ntuple_TTI_*.root | sed 's@/eos/uscms/@root://cmseos:1094//@' > TTbar_PU0.txt
 ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU140_part/ntuple_TTI_*.root | sed 's@/eos/uscms/@root://cmseos:1094//@' > TTbar_PU140.txt
 ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_PU200_part/ntuple_TTI_*.root | sed 's@/eos/uscms/@root://cmseos:1094//@' > TTbar_PU200.txt
+ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/MuonPt2to8_FLATBS15PU200_part/ntuple_TTI_*.root | sed 's@/eos/uscms/@root://cmseos:1094//@' > MuonPt2to8_FLATBS15PU200.txt
+ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/MuonPt8to100_FLATBS15PU200_part/ntuple_TTI_*.root | sed 's@/eos/uscms/@root://cmseos:1094//@' > MuonPt8to100_FLATBS15PU200.txt
+ls -v /eos/uscms/store/group/l1upgrades/SLHC/GEN/620_SLHC28p1/blt_projects/NoAnalyzer/TTbar_CoolLoopPU200_part/ntuple_TTI_*.root | sed 's@/eos/uscms/@root://cmseos:1094//@' > TTbar_CoolLoopPU200.txt
