@@ -475,6 +475,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
   TH1F* h_trk_vspt = new TH1F("trk_vspt", ";Track p_{T} [GeV]; ",40,0,20);
   TH1F* h_tp_vspt  = new TH1F("tp_vspt", ";TP p_{T} [GeV]; ",40,0,20);
 
+#ifdef JFTEST
+  TH1F* h_trk_for_purity = new TH1F("trk_for_purity", ";Track p_{T} [GeV]; L1 tracks / 1.0 GeV",100,0,100.);
+  TH1F* h_match_trk_for_purity = new TH1F("match_trk_for_purity", ";Track p_{T} [GeV]; L1 tracks / 1.0 GeV",100,0,100.);
+#endif
+
 
   TH1F* h_tp_z0    = new TH1F("tp_z0",   ";Tracking particle z_{0} [cm]; Tracking particles / 1.0 cm",    50, -25.0, 25.0);
   TH1F* h_tp_z0_L    = new TH1F("tp_z0_L",   ";Tracking particle z_{0} [cm]; Tracking particles / 1.0 cm",    50, -25.0, 25.0);
@@ -736,6 +741,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
 #if defined(JFTEST) && !defined(DOTRACKLET)
       if (trk_roadref->at(it) >= AMTTNROADS) continue;
 #endif
+#ifdef JFTEST
+      if (trk_pt->at(it) > 3.0 && fabs(trk_eta->at(it))<2.5) {
+        h_trk_for_purity->Fill(trk_pt->at(it));
+      }
+#endif
            
       // only look at tracks in (ttbar) jets ?
       if (TP_select_injet > 0) {
@@ -835,6 +845,11 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
 
 #if defined(JFTEST) && !defined(DOTRACKLET)
       if (matchtrk_roadref->at(it) >= AMTTNROADS) continue;
+#endif
+#ifdef JFTEST
+      if (matchtrk_pt->at(it) > 3.0 && fabs(matchtrk_eta->at(it))<2.5) {
+        h_match_trk_for_purity->Fill(matchtrk_pt->at(it));
+      }
 #endif
 
       // ----------------------------------------------------------------------------------------------------------------
@@ -2504,6 +2519,17 @@ void L1TrackNtuplePlot(TString type, int TP_select_injet=0, int TP_select_pdgid=
 
   c.SaveAs(DIR+type+"_trackrate_vspt.png");
   c.SaveAs(DIR+type+"_trackrate_vspt.eps");
+
+#ifdef JFTEST
+  h_trk_for_purity->Sumw2();
+  h_match_trk_for_purity->Sumw2();
+  TH1F* h_purity_pt = (TH1F*) h_trk_for_purity->Clone();
+  h_purity_pt->SetName("purity_pt");
+  h_purity_pt->GetYaxis()->SetTitle("Purity");
+  h_purity_pt->Divide(h_match_trk_for_purity, h_trk_for_purity, 1.0, 1.0, "B");
+  h_purity_pt->SetAxisRange(0,1.1,"Y");
+  h_purity_pt->Write();
+#endif
 
 
   // ---------------------------------------------------------------------------------------------------------
