@@ -159,7 +159,7 @@ def drawer_project(tree, histos, options):
             signal  = evt.trkParts_signal [ipart]
             pt      = evt.trkParts_pt     [ipart]
 
-            if not (charge!=0 and primary and intime and pt >= 1):
+            if not (charge!=0 and primary and intime and pt >= 1.):
                 continue
 
             if options.signal and not signal:
@@ -172,7 +172,7 @@ def drawer_project(tree, histos, options):
             vz      = evt.trkParts_vz     [ipart]
             pdgId   = evt.trkParts_pdgId  [ipart]
 
-            aux_TT = TrackParametersToTT(phi, float(charge)/pt , eta, vz)
+            aux_TT = TrackParametersToTT(phi, float(charge)/pt , eta, vz, apply_pt_cut=False)
             if aux_TT != options.tower:
                 continue
 

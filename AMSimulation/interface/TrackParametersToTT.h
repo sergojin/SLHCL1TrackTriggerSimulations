@@ -12,13 +12,13 @@ namespace slhcl1tt {
 
   class TrackParametersToTT {
   public:
-    int get_tt(double phi, double invPt, double eta, double z0) {
+    int get_tt(double phi, double invPt, double eta, double z0, bool apply_pt_cut=true) {
       constexpr double max_eta = 2.2;
       constexpr double max_z0 = 15.; // [cm]
       constexpr double max_invPt = 1./3;  // [1/GeV]
       double etaStar = get_etaStar_from_eta(eta, z0, invPt);
       double phiStar = get_phiStar_from_phi(phi, invPt);
-      if (std::abs(etaStar) > max_eta || std::abs(z0) > max_z0 || std::abs(invPt) > max_invPt) {
+      if (std::abs(etaStar) > max_eta || std::abs(z0) > max_z0 || (apply_pt_cut && std::abs(invPt) > max_invPt)) {
         return -1;
       }
 

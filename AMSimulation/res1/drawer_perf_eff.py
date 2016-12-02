@@ -76,18 +76,18 @@ def drawer_book(options):
         histos[prefix + "pppt"].SetBins(50, 0., 10.)
 
         prefix = "resolution_"
-        histos[prefix + "pt_vs_pt"]  = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 20, -100, 100, 100, -0.20, 0.20)
-        histos[prefix + "pt_vs_eta"] = TH2F(hname, "; #eta; p_{T} resolution/p_{T}", 20, 0, 0.8, 100, -0.20, 0.20)
+        histos[prefix + "pt_vs_pt" ].SetBins(20, -100, 100, 100, -0.20, 0.20)
+        histos[prefix + "pt_vs_eta"].SetBins(20, 0, 0.8, 100, -0.20, 0.20)
 
     if options.low_low_stat:
         prefix = "efficiency_"
         histos[prefix + "pt"  ].SetBins(20, 0., 500.)
-        histos[prefix + "ppt" ].SetBins(20, 0., 50.)
+        histos[prefix + "ppt" ].SetBins(20, 0., 60.)
         histos[prefix + "pppt"].SetBins(20, 0., 10.)
 
         prefix = "resolution_"
-        histos[prefix + "pt_vs_pt"]  = TH2F(hname, "; c*p_{T} [GeV]; p_{T} resolution/p_{T}", 10, -100, 100, 100, -0.20, 0.20)
-        histos[prefix + "pt_vs_eta"] = TH2F(hname, "; #eta; p_{T} resolution/p_{T}", 10, 0, 0.8, 100, -0.20, 0.20)
+        histos[prefix + "pt_vs_pt" ].SetBins(10, -100, 100, 100, -0.20, 0.20)
+        histos[prefix + "pt_vs_eta"].SetBins(10, 0, 0.8, 100, -0.20, 0.20)
 
     # Error statistics
     for hname, h in histos.iteritems():
@@ -135,6 +135,7 @@ def drawer_project(tree, histos, options):
     tree.SetBranchStatus("AMTTTracks_synMatchCat", 1)
     tree.SetBranchStatus("AMTTTracks_synTpId"    , 1)
     tree.SetBranchStatus("AMTTTracks_patternRef" , 1)
+    tree.SetBranchStatus("AMTTTracks_roadRef"    , 1)
     #tree.SetBranchStatus("AMTTTracks_stubRefs"   , 1)
 
     # Loop over events
@@ -158,14 +159,14 @@ def drawer_project(tree, histos, options):
             primary = evt.trkParts_primary[ipart]
             intime  = evt.trkParts_intime [ipart]
             signal  = evt.trkParts_signal [ipart]
+            pt      = evt.trkParts_pt     [ipart]
 
-            if not (charge!=0 and primary and intime):
+            if not (charge!=0 and primary and intime and pt >= 1.):
                 continue
 
             if options.signal and not signal:
                 continue
 
-            pt      = evt.trkParts_pt     [ipart]
             eta     = evt.trkParts_eta    [ipart]
             phi     = evt.trkParts_phi    [ipart]
             #vx      = evt.trkParts_vx     [ipart]
@@ -173,7 +174,7 @@ def drawer_project(tree, histos, options):
             vz      = evt.trkParts_vz     [ipart]
             pdgId   = evt.trkParts_pdgId  [ipart]
 
-            #aux_TT = TrackParametersToTT(phi, float(charge)/pt , eta, vz)
+            #aux_TT = TrackParametersToTT(phi, float(charge)/pt , eta, vz, apply_pt_cut=False)
             #if aux_TT != options.tower:
             #    continue
 
@@ -189,10 +190,16 @@ def drawer_project(tree, histos, options):
             trigger = False
 
             patternRef  = evt.AMTTTracks_patternRef [itrack]
+            if not (patternRef < options.maxPatterns):
+                continue
+
+            roadRef     = evt.AMTTTracks_roadRef    [itrack]
+            if not (roadRef < options.maxRoads):
+                continue
+
             synMatchCat = evt.AMTTTracks_synMatchCat[itrack]
-            if patternRef < options.maxPatterns:
-                if synMatchCat == 1:  # good track
-                    trigger = True
+            if synMatchCat == 1:  # good track
+                trigger = True
 
             track_pt    = evt.AMTTTracks_pt         [itrack]
             track_eta   = evt.AMTTTracks_eta        [itrack]
@@ -424,6 +431,7 @@ if __name__ == '__main__':
     # Add more arguments
     parser.add_argument("ss", help="short name of superstrip definition (e.g. sf1_nz8)")
     parser.add_argument("--maxPatterns", type=int, default=999999999, help="number of patterns to reach the desired coverage")
+    parser.add_argument("--maxRoads", type=int, default=999999999, help="number of roads to not truncate")
     parser.add_argument("--minPt", type=float, default=3, help="min pT for gen particle (default: %(default)s)")
     parser.add_argument("--low-stat", action="store_true", help="low statistics (default: %(default)s)")
     parser.add_argument("--low-low-stat", action="store_true", help="low low statistics (default: %(default)s)")
