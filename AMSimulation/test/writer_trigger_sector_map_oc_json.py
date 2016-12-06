@@ -165,7 +165,7 @@ def get_etaStar_from_eta(eta, z0, invPt, rStar=60.):
 def TrackParametersToTT(phi, invPt, eta, z0, apply_pt_cut=True):
     max_eta = 2.2
     max_z0 = 15.      # [cm]
-    max_invPt = 1./2  # [1/GeV]
+    max_invPt = 1./3  # [1/GeV]
     etaStar = get_etaStar_from_eta(eta, z0, invPt)
     phiStar = get_phiStar_from_phi(phi, invPt)
     if abs(etaStar) > max_eta or abs(z0) > max_z0 or (apply_pt_cut and abs(invPt) > max_invPt):
