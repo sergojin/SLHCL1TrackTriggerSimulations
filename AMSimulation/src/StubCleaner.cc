@@ -1,7 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/StubCleaner.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
-
 static const unsigned MIN_NGOODSTUBS = 3;
 static const unsigned MAX_NGOODSTUBS = 8;
 
@@ -52,6 +50,12 @@ float calcIdealZ(float simVz, float simCotTheta, float simChargeOverPt, float r)
     //return simVz + r * simCotTheta;
     return simVz + (1.0 / (mPtFactor * simChargeOverPt) * std::asin(mPtFactor * r * simChargeOverPt)) * simCotTheta;
 }
+
+float calcIdealR(float simVz, float simCotTheta, float simChargeOverPt, float z) {
+    static const float mPtFactor = 0.3*3.8*1e-2/2.0;
+    //return (z - simVz) / simCotTheta;
+    return std::abs(1.0 / (mPtFactor * simChargeOverPt) * std::sin(mPtFactor * (z - simVz) / simCotTheta * simChargeOverPt));
+}
 }
 
 
@@ -62,24 +66,18 @@ int StubCleaner::cleanStubs(TString src, TString out) {
     // _________________________________________________________________________
     // For reading
     TTStubReader reader(verbose_);
-    if (reader.init(src, false)) {
-        std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // For writing
     TTStubWriter writer(verbose_);
-    if (writer.init(reader.getChain(), out)) {
-        std::cout << Error() << "Failed to initialize TTStubWriter." << std::endl;
-        return 1;
-    }
+    writer.init(reader.getChain(), out);
 
-    if (verbose_)  { // RR
-      std::map<unsigned,ModuleOverlap>::iterator it_mo;
-    	std::cout << Info() << momap_->moduleOverlap_map_.size() << std::endl;
-    	for (it_mo=momap_->moduleOverlap_map_.begin(); it_mo!=momap_->moduleOverlap_map_.end();++it_mo) {
-    		std::cout << Info() << it_mo->first << "\t" << it_mo->second.layer << std::endl;
-    	}
+    if (po_.removeOverlap && verbose_>2)  { // RR
+        std::map<unsigned,ModuleOverlap>::iterator it_mo;
+        std::cout << Info() << momap_->moduleOverlap_map_.size() << std::endl;
+        for (it_mo=momap_->moduleOverlap_map_.begin(); it_mo!=momap_->moduleOverlap_map_.end();++it_mo) {
+            std::cout << Info() << it_mo->first << "\t" << it_mo->second.layer << std::endl;
+        }
     }
 
 
@@ -135,6 +133,11 @@ int StubCleaner::cleanStubs(TString src, TString out) {
         float simCotTheta     = std::sinh(simEta);
         float simChargeOverPt = float(simCharge)/simPt;
 
+        // Apply trigger tower phase space cuts
+        int aux_TT = TrackParametersToTT().get_tt(simPhi, simChargeOverPt, simEta, simVz);
+        if (aux_TT != (int) po_.tower)
+            keep = false;
+
         // Apply pt, eta, phi requirements
         bool sim = (po_.minPt  <= simPt  && simPt  <= po_.maxPt  &&
                     po_.minEta <= simEta && simEta <= po_.maxEta &&
@@ -143,7 +146,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
         if (!sim)
             keep = false;
 
-        if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " simPt: " << simPt << " simEta: " << simEta << " simPhi: " << simPhi << " simVz: " << simVz << " simChargeOverPt: " << simChargeOverPt << " keep? " << keep << std::endl;
+        if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " simPt: " << simPt << " simEta: " << simEta << " simPhi: " << simPhi << " simVz: " << simVz << " simChargeOverPt: " << simChargeOverPt << " aux_TT: " << aux_TT << " keep? " << keep << std::endl;
 
         // _____________________________________________________________________
         // Remove multiple stubs in one layer
@@ -164,33 +167,33 @@ int StubCleaner::cleanStubs(TString src, TString out) {
             float    stub_ds  = reader.vb_trigBend->at(istub);
 
             // RR removing stubs in the overlapping regions
-            if (removeOverlap_) {
-            	float    stub_coordx = reader.vb_coordx->at(istub);
-            	float    stub_coordy = reader.vb_coordy->at(istub);
-            	std::map<unsigned,ModuleOverlap>::iterator it_mo = momap_->moduleOverlap_map_.find(moduleId);
-            	if (it_mo != momap_->moduleOverlap_map_.end()) {
-            		float minx = it_mo->second.x1;
-            		if (stub_coordx < minx) {
-            			if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t" << moduleId << "\t x1: " <<  stub_coordx << std::endl;
-            			continue;
-            		}
-            		float maxx = it_mo->second.x2;
-            		if (stub_coordx > maxx) {
-            			if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t x2: " <<  stub_coordx << std::endl;
-            			continue;
-            		}
-            		float miny = it_mo->second.y1;
-            		if (stub_coordy < miny) {
-            			if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y1: " <<  stub_coordy << std::endl;
-            			continue;
-            		}
-            		float maxy = it_mo->second.y2;
-            		if (stub_coordy > maxy) {
-            			if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y2: " <<  stub_coordy << std::endl;
-            			continue;
-            		}
-            	}
-            } // endif removeOverlap_
+            if (po_.removeOverlap) {
+                float    stub_coordx = reader.vb_coordx->at(istub);
+                float    stub_coordy = reader.vb_coordy->at(istub);
+                std::map<unsigned,ModuleOverlap>::iterator it_mo = momap_->moduleOverlap_map_.find(moduleId);
+                if (it_mo != momap_->moduleOverlap_map_.end()) {
+                    float minx = it_mo->second.x1;
+                    if (stub_coordx < minx) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t" << moduleId << "\t x1: " <<  stub_coordx << std::endl;
+                        continue;
+                    }
+                    float maxx = it_mo->second.x2;
+                    if (stub_coordx > maxx) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t x2: " <<  stub_coordx << std::endl;
+                        continue;
+                    }
+                    float miny = it_mo->second.y1;
+                    if (stub_coordy < miny) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y1: " <<  stub_coordy << std::endl;
+                        continue;
+                    }
+                    float maxy = it_mo->second.y2;
+                    if (stub_coordy > maxy) {
+                        if (verbose_>2)  std::cout << Info() << "Removing stub in module " << ievt << "\t"  << moduleId << "\t y2: " <<  stub_coordy << std::endl;
+                        continue;
+                    }
+                }
+            }  // end if removeOverlap
 
             unsigned lay16    = compressLayer(decodeLayer(moduleId));
             assert(lay16 < 16);
@@ -202,10 +205,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
             float idealR   = stub_r;
 
             if (lay16 >= 6) {  // for endcap
-                idealR     = (stub_z - simVz) / simCotTheta;
-                if (idealR <= 0) {
-                    std::cout << Warning() << "Stub ideal r <= 0! moduleId: " << moduleId << " r: " << stub_r << " z: " << stub_z << " simVz: " << simVz << " simCotTheta: " << simCotTheta << std::endl;
-                }
+                idealR     = calcIdealR(simVz, simCotTheta, simChargeOverPt, stub_z);
                 idealPhi   = calcIdealPhi(simPhi, simChargeOverPt, idealR);
                 idealZ     = stub_z;
             }
@@ -353,8 +353,7 @@ int StubCleaner::cleanStubs(TString src, TString out) {
 
     if (verbose_)  std::cout << Info() << Form("Read: %7ld, kept: %7ld", nRead, nKept) << std::endl;
 
-    long long nentries = writer.writeTree();
-    assert(nentries == nRead);
+    writer.write();
 
     return 0;
 }

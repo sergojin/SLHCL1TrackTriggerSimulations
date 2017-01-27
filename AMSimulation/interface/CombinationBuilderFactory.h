@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <memory>
-#include <iostream>
+//#include <iostream>
 #include "LinearizedTrackFit/LinearizedTrackFit/interface/SimpleCombinationBuilder.h"
 #include "LinearizedTrackFit/LinearizedTrackFit/interface/AdvancedCombinationBuilder.h"
 
@@ -16,8 +16,9 @@ class CombinationBuilderFactory
   CombinationBuilderFactory(const bool advancedCombinationBuilder) : verbose_(true)
   {
     // bool advancedCombinationBuilder = false;
-    if (advancedCombinationBuilder) combinationBuilder_ = std::make_shared<AdvancedCombinationBuilder>(true);
-    else combinationBuilder_ = std::make_shared<SimpleCombinationBuilder>(true);
+    bool fillEmptyStubs = true;
+    if (advancedCombinationBuilder) combinationBuilder_ = std::make_shared<AdvancedCombinationBuilder>(fillEmptyStubs);
+    else combinationBuilder_ = std::make_shared<SimpleCombinationBuilder>(fillEmptyStubs);
   }
 
   // Destructor
@@ -43,10 +44,10 @@ class CombinationBuilderFactory
     // std::cout << "total combinations for this road = " << combinationBuilder_->totalCombinations() << std::endl;
 
     for (int comb = 0; comb < combinationBuilder_->totalCombinations(); ++comb) {
-      StubsCombination stubsCombination(combinationBuilder_->nextCombination());
+      const StubsCombination& stubsCombination(combinationBuilder_->nextCombination());
       // std::cout << "loaded combination number " << comb << std::endl;
       combination.clear();
-      for (auto s : stubsCombination) {
+      for (const auto& s : stubsCombination) {
 	// std::cout << "filling stubRef = " << s.stubRef() << std::endl;
 	combination.push_back(s.stubRef());
 	// if (s.size())

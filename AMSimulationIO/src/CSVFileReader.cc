@@ -1,25 +1,24 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/CSVFileReader.h"
 
-using namespace slhcl1tt;
-
+#include <cassert>
+#include <stdexcept>
 #include <fstream>
 #include <sstream>
 
 
-// _____________________________________________________________________________
 CSVFileReader::CSVFileReader(int verbose)
 : verbose_(verbose) {}
 
 CSVFileReader::~CSVFileReader() {}
 
 
-int CSVFileReader::getTriggerTowerMap(TString src, unsigned tt,
-                                      std::map<unsigned, std::vector<unsigned> >& ttmap,
-                                      std::map<unsigned, std::vector<unsigned> >& ttrmap) {
+void CSVFileReader::getTriggerTowerMap(TString src, unsigned tt,
+                                       std::map<unsigned, std::vector<unsigned> >& ttmap,
+                                       std::map<unsigned, std::vector<unsigned> >& ttrmap) {
 
     if (!src.EndsWith(".csv")) {
-        std::cout << Error() << "Input filename must be .csv" << std::endl;
-        return 1;
+        TString msg = "Input filename must be .csv";
+        throw std::invalid_argument(msg.Data());
     }
 
     //if (verbose_)  std::cout << Info() << "Opening " << src << std::endl;
@@ -50,8 +49,8 @@ int CSVFileReader::getTriggerTowerMap(TString src, unsigned tt,
     }
 
     if (values.empty()) {
-        std::cout << Error() << "Failed to read any trigger tower" << std::endl;
-        return 1;
+        TString msg = "Failed to read any trigger tower";
+        throw std::invalid_argument(msg.Data());
     }
 
     // Fill ttmap
@@ -64,6 +63,4 @@ int CSVFileReader::getTriggerTowerMap(TString src, unsigned tt,
     for (it = values.begin(); it != values.end(); ++it) {
         ttrmap[*it].push_back(tt);
     }
-
-    return 0;
 }

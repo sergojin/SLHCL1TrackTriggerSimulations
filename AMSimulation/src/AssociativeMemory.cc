@@ -14,11 +14,14 @@ int AssociativeMemory::init(unsigned npatterns) {
     patternAttributes_invPt_.clear();
     patternAttributes_invPt_.reserve(npatterns);
 
+    patternAttributes_freq_.clear();
+    patternAttributes_freq_.reserve(npatterns);
+
     return 0;
 }
 
 // _____________________________________________________________________________
-void AssociativeMemory::insert(std::vector<superstrip_type>::const_iterator begin, std::vector<superstrip_type>::const_iterator end, const float invPt) {
+void AssociativeMemory::insert(std::vector<superstrip_type>::const_iterator begin, std::vector<superstrip_type>::const_iterator end, const float invPt, const unsigned freq) {
     //patternBank_.insert(patternBank_.end(), begin, end);
 
     pattern_type patt;
@@ -28,16 +31,19 @@ void AssociativeMemory::insert(std::vector<superstrip_type>::const_iterator begi
     }
     patternBank_.push_back(patt);
     patternAttributes_invPt_.push_back(invPt);
+    patternAttributes_freq_.push_back(freq);
 }
 
-void AssociativeMemory::insert(const pattern_type& patt, const float invPt) {
+void AssociativeMemory::insert(const pattern_type& patt, const float invPt, const unsigned freq) {
     patternBank_.push_back(patt);
     patternAttributes_invPt_.push_back(invPt);
+    patternAttributes_freq_.push_back(freq);
 }
 
 // _____________________________________________________________________________
 void AssociativeMemory::freeze() {
     assert(patternBank_.size() == patternAttributes_invPt_.size());
+    assert(patternBank_.size() == patternAttributes_freq_.size());
     frozen_ = true;
 }
 
@@ -51,9 +57,10 @@ std::vector<unsigned> AssociativeMemory::lookup(const HitBuffer& hitBuffer, cons
 
         for (pattern_type::const_reverse_iterator itlayer = itpatt->rend() - nLayers;
              itlayer != itpatt->rend(); ++itlayer) {
+            unsigned layer = (itpatt->rend() - 1) - itlayer;
 
             const superstrip_type ss = *itlayer;
-            if (!hitBuffer.isHit(ss))
+            if (!hitBuffer.isHit(layer, ss))
                 ++nMisses;
 
             // Skip if more misses than allowed
@@ -67,9 +74,10 @@ std::vector<unsigned> AssociativeMemory::lookup(const HitBuffer& hitBuffer, cons
 }
 
 // _____________________________________________________________________________
-void AssociativeMemory::retrieve(const unsigned patternRef, pattern_type& superstripIds, float& invPt) {
+void AssociativeMemory::retrieve(const unsigned patternRef, pattern_type& superstripIds, float& invPt, unsigned& freq) {
     superstripIds = patternBank_            .at(patternRef);
     invPt         = patternAttributes_invPt_.at(patternRef);
+    freq          = patternAttributes_freq_ .at(patternRef);
 }
 
 // _____________________________________________________________________________

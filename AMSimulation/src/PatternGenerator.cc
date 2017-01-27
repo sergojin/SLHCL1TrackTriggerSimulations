@@ -1,8 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternGenerator.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
-
 static const unsigned MAX_FREQUENCY = 0xffffffff;  // unsigned
 
 namespace {
@@ -21,10 +18,7 @@ int PatternGenerator::makePatterns(TString src) {
     // _________________________________________________________________________
     // For reading
     TTStubReader reader(verbose_);
-    if (reader.init(src, false)) {
-        std::cout << Error() << "Failed to initialize TTStubReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // _________________________________________________________________________
     // Get trigger tower reverse map
@@ -37,6 +31,9 @@ int PatternGenerator::makePatterns(TString src) {
     patternBank_map_.clear();
     pattern_type patt;
     patt.fill(0);
+
+    PatternAttribute zero_attr;
+    zero_attr.reset();
 
     // Bookkeepers
     float coverage = 0.;
@@ -131,23 +128,9 @@ int PatternGenerator::makePatterns(TString src) {
 
         // Update the attributes
         if (po_.speedup<1) {
-            std::pair<std::map<pattern_type, Attributes *>::iterator, bool> ins = patternAttributes_map_.insert(std::make_pair(patt, new Attributes()));
-            Attributes * attr = ins.first->second;
-            if (attr) {
-                ++ attr->n;
-                attr->invPt.fill(simChargeOverPt);
-                attr->cotTheta.fill(simCotTheta);
-                attr->phi.fill(simPhi);
-                attr->z0.fill(simVz);
-            }
-        }
-        else if (po_.speedup==1) {
-            std::pair<std::map<pattern_type, ShortAttributes *>::iterator, bool> ins = patternShortAttributes_map_.insert(std::make_pair(patt, new ShortAttributes()));
-            ShortAttributes * attr = ins.first->second;
-            if (attr) {
-                attr->invPt.fill(simChargeOverPt);
-                attr->phi.fill(simPhi);
-            }
+            std::pair<std::map<pattern_type, PatternAttribute>::iterator, bool> ins = patternAttributes_map_.insert(std::make_pair(patt, zero_attr));
+            PatternAttribute& attr = ins.first->second;  // pass by reference
+            attr.fill(simChargeOverPt, simCotTheta, simPhi, simVz);
         }
 
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " patt: " << patt << std::endl;
@@ -213,10 +196,7 @@ int PatternGenerator::writePatterns(TString out) {
     // _________________________________________________________________________
     // For writing
     PatternBankWriter writer(verbose_);
-    if (writer.init(out)) {
-        std::cout << Error() << "Failed to initialize TTRoad writer." << std::endl;
-        return 1;
-    }
+    writer.init(out);
 
     // _________________________________________________________________________
     // Save pattern bank statistics
@@ -236,24 +216,24 @@ int PatternGenerator::writePatterns(TString out) {
     int n90=0, n95=0, n99=0;
 
     for (long long ipatt=0; ipatt<npatterns; ++ipatt) {
-        if (verbose_>1 && ipatt%100==0) {
-            float coverage = float(nKept) / coverage_count_ * coverage_;
-            if (coverage < 0.90 + 1e-5)
-                n90 = ipatt;
-            else if (coverage < 0.95 + 1e-5)
-                n95 = ipatt;
-            else if (coverage < 0.99 + 1e-5)
-                n99 = ipatt;
-
-            if (ipatt%1000==0) std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ipatt, coverage) << std::endl;
-        }
-
         freq = patternBank_pairs_.at(ipatt).second;
 
         // Check whether patterns are indeed sorted by frequency
         assert(oldFreq >= freq);
         oldFreq = freq;
         nKept += freq;
+
+        float coverage = float(nKept) / coverage_count_ * coverage_;
+        if (!(coverage >= 0.90))
+            n90 = ipatt;
+        if (!(coverage >= 0.95))
+            n95 = ipatt;
+        if (!(coverage >= 0.99))
+            n99 = ipatt;
+
+        if (verbose_>1 && ipatt%1000==0) {
+            std::cout << Debug() << Form("... Writing event: %7lld, sorted coverage: %7.5f", ipatt, coverage) << std::endl;
+        }
 
         if (freq < (unsigned) po_.minFrequency)  // cut off
             break;
@@ -266,37 +246,31 @@ int PatternGenerator::writePatterns(TString out) {
         *(writer.pb_frequency) = freq;
 
         if (po_.speedup<1) {
-            const Attributes * attr = patternAttributes_map_.at(patt);
-            *(writer.pb_invPt_mean)     = attr->invPt.getMean();
-            *(writer.pb_invPt_sigma)    = attr->invPt.getSigma();
-            *(writer.pb_cotTheta_mean)  = attr->cotTheta.getMean();
-            *(writer.pb_cotTheta_sigma) = attr->cotTheta.getSigma();
-            *(writer.pb_phi_mean)       = attr->phi.getMean();
-            *(writer.pb_phi_sigma)      = attr->phi.getSigma();
-            *(writer.pb_z0_mean)        = attr->z0.getMean();
-            *(writer.pb_z0_sigma)       = attr->z0.getSigma();
-        }
-        else if (po_.speedup==1) {
-            const ShortAttributes * attr = patternShortAttributes_map_.at(patt);
-            *(writer.pb_invPt_mean)     = attr->invPt.getMean();
-            *(writer.pb_invPt_sigma)    = attr->invPt.getSigma();
-            *(writer.pb_phi_mean)       = attr->phi.getMean();
-            *(writer.pb_phi_sigma)      = attr->phi.getSigma();
+            const PatternAttribute& attr = patternAttributes_map_.at(patt);
+            assert(freq == attr.n);
+
+            *(writer.pb_invPt_mean)     = attr.invPt_mean;
+            *(writer.pb_invPt_sigma)    = std::sqrt(attr.invPt_variance);
+            *(writer.pb_cotTheta_mean)  = attr.cotTheta_mean;
+            *(writer.pb_cotTheta_sigma) = std::sqrt(attr.cotTheta_variance);
+            *(writer.pb_phi_mean)       = attr.phi_mean;
+            *(writer.pb_phi_sigma)      = std::sqrt(attr.phi_variance);
+            *(writer.pb_z0_mean)        = attr.z0_mean;
+            *(writer.pb_z0_sigma)       = std::sqrt(attr.z0_variance);
         }
 
         writer.fillPatternBank();
         writer.fillPatternAttributes();
     }
 
-    long long nentries = writer.writeTree();
-    assert(npatterns == nentries);
+    writer.write();
     assert(coverage_count_ == nKept);
 
     if (verbose_)  {
-    	std::cout << Info() << "After sorting by frequency: " << std::endl;
-    	std::cout << Info() << " N(90% cov) = " << n90 << "\tPopularity = " << patternBank_pairs_.at(n90).second << std::endl;
-    	std::cout << Info() << " N(95% cov) = " << n95 << "\tPopularity = " << patternBank_pairs_.at(n95).second << std::endl;
-    	std::cout << Info() << " N(99% cov) = " << n99 << "\tPopularity = " << patternBank_pairs_.at(n99).second << std::endl;
+      std::cout << Info() << "After sorting by frequency: " << std::endl;
+      std::cout << Info() << " N(90% cov) = " << n90 << "\tPopularity = " << patternBank_pairs_.at(n90).second << std::endl;
+      std::cout << Info() << " N(95% cov) = " << n95 << "\tPopularity = " << patternBank_pairs_.at(n95).second << std::endl;
+      std::cout << Info() << " N(99% cov) = " << n99 << "\tPopularity = " << patternBank_pairs_.at(n99).second << std::endl;
     }
 
     return 0;

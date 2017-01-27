@@ -10,24 +10,23 @@ namespace slhcl1tt {
 class HitBuffer {
   public:
     // Constructor
-    HitBuffer() : frozen_(false) {}
+    HitBuffer() : nlayers_(0), nss_(0), frozen_(false) {}
 
     // Destructor
     ~HitBuffer() {}
 
     // Functions
-    // Initialize
-    int init(unsigned maxBins);
+    int init(unsigned nlayers, unsigned nss);
 
     void reset();
 
-    void insert(superstrip_type ss, unsigned stubRef);
+    void insert(unsigned layer, superstrip_type ss, unsigned stubRef);
 
     void freeze(unsigned maxStubs);
 
-    bool isHit(superstrip_type ss) const { return superstripBools_.at(ss); }
+    bool isHit(unsigned layer, superstrip_type ss) const;
 
-    std::vector<unsigned> getHits(superstrip_type ss) const { return superstripHits_.at(ss); }
+    std::vector<unsigned> getHits(unsigned layer, superstrip_type ss) const;
 
     // Debug
     void print();
@@ -36,6 +35,8 @@ class HitBuffer {
     // Member data
     std::map<superstrip_type, std::vector<unsigned> > superstripHits_;   // superstrip --> stubRefs (std::map)
     std::vector<bool>                                 superstripBools_;  // superstrip --> hit or empty (hash table)
+    unsigned nlayers_;
+    unsigned nss_;
     bool frozen_;
 };
 

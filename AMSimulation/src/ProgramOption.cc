@@ -46,6 +46,7 @@ std::ostream& operator<<(std::ostream& o, const ProgramOption& po) {
       << "  maxVz: "        << po.maxVz
 
       << "  picky: "        << po.picky
+      << "  removeOverlap: "<< po.removeOverlap
       << "  minFrequency: " << po.minFrequency
       << "  maxPatterns: "  << po.maxPatterns
       << "  maxMisses: "    << po.maxMisses
@@ -61,12 +62,14 @@ std::ostream& operator<<(std::ostream& o, const ProgramOption& po) {
       << "  maxCombs: "     << po.maxCombs
       << "  maxTracks: "    << po.maxTracks
 
+      << "  rmDuplicate: "  << po.rmDuplicate
+      << "  rmParDuplicate: " << po.rmParDuplicate
+
       << "  oldCB: "        << po.oldCB
       << "  FiveOfSix: "    << po.FiveOfSix
       << "  PDDS: "         << po.PDDS
 
       << "  no_trim: "      << po.no_trim
-      << "  removeOverlap: "<< po.removeOverlap
 
       << "  datadir: "      << po.datadir
       ;

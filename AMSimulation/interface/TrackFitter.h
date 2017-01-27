@@ -1,6 +1,9 @@
 #ifndef AMSimulation_TrackFitter_h_
 #define AMSimulation_TrackFitter_h_
 
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackWriter.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoPCA.h"
@@ -9,7 +12,6 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/CombinationFactory.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/CombinationBuilderFactory.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PairCombinationFactory.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/GhostBuster.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/DuplicateRemoval.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ParameterDuplicateRemoval.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/MCTruthAssociator.h"
@@ -17,14 +19,14 @@ using namespace slhcl1tt;
 
 
 class TrackFitter {
-
   public:
+    typedef TTTrackReaderT<kTrackFitter> TTRoadReader;
+    typedef TTTrackWriterT<kTrackFitter> TTTrackWriter;
+
     // Constructor
     TrackFitter(const ProgramOption& po) :
       po_(po),
-      nEvents_(po.maxEvents), verbose_(po.verbose),
-      prefixRoad_("AMTTRoads_"), prefixTrack_("AMTTTracks_"), suffix_(""),
-      combinationBuilderFactory_(std::make_shared<CombinationBuilderFactory>(po_.FiveOfSix)) {
+      nEvents_(po.maxEvents), verbose_(po.verbose) {
 
         // Decide the track fitter to use
         fitter_ = 0;
@@ -39,6 +41,8 @@ class TrackFitter {
         } else {
             throw std::invalid_argument("unknown track fitter algo.");
         }
+
+        combinationBuilderFactory_ = std::make_shared<CombinationBuilderFactory>(po_.FiveOfSix);
     }
 
     // Destructor
@@ -59,25 +63,17 @@ class TrackFitter {
     long long nEvents_;
     int verbose_;
 
-    // Configurations
-    const TString prefixRoad_;
-    const TString prefixTrack_;
-    const TString suffix_;
-
     // Track fitter
     TrackFitterAlgoBase * fitter_;
 
     // Combination factory
     CombinationFactory combinationFactory_;
-    
+
     // pair combination factory
     PairCombinationFactory pairCombinationFactory_;
 
     // SCB and ACB combination factory
     std::shared_ptr<CombinationBuilderFactory> combinationBuilderFactory_;
-
-    // Ghost buster
-    GhostBuster ghostBuster_;
 
     // MC truth associator
     MCTruthAssociator truthAssociator_;

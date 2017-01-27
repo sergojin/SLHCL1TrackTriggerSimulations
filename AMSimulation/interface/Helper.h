@@ -1,7 +1,22 @@
 #ifndef AMSimulation_Helper_h_
 #define AMSimulation_Helper_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/Helper.h"
+#include <algorithm>
+//#include <functional>
+#include <cassert>
+#include <stdexcept>
+#include <iostream>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+#include <unordered_set>
+#include <unordered_map>
+
+#include "TROOT.h"  // for gROOT
+#include "TString.h"
+#include "TTree.h"
 
 
 namespace slhcl1tt {
@@ -58,6 +73,20 @@ inline unsigned compressLayer(const unsigned& lay) {
     if (lay < 28) return lay-9;  // 25 = calo, 26 = muon, 27 = fake
     return 255;
 }
+
+TString Color(const TString& c);
+TString EndColor();
+void NoColor();
+
+void Timing(bool start=false);
+void ShowTiming();
+
+TString Error();
+TString Warning();
+TString Info();
+TString Debug();
+
+void ResetDeleteBranches(TTree* tree);
 
 }  // namespace slhcl1tt
 

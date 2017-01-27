@@ -5,6 +5,8 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitter.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternAnalyzer.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/MatrixTester.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/PatternMerging.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/RoadMerging.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/NTupleMaker.h"
 
 #include "boost/program_options.hpp"
@@ -41,6 +43,8 @@ int main(int argc, char **argv) {
         ("trackFitting,T"      , "Perform track fitting")
         ("bankAnalysis,A"      , "Analyze associative memory pattern bank")
         ("matrixTesting,U"     , "Test matrix constants for PCA track fitting")
+        ("patternMerging,P"    , "Run pattern merging")
+        ("roadMerging,Q"       , "Run road merging")
         ("write,W"             , "Write full ntuple")
         ("no-color"            , "Turn off colored text")
         ("timing"              , "Show timing information")
@@ -66,16 +70,16 @@ int main(int argc, char **argv) {
         ("nDCBits"      , po::value<unsigned>(&option.nDCBits)->default_value(0), "Specify # of DC bits")
 
         // Trigger tower selection
-        ("tower,t"      , po::value<unsigned>(&option.tower)->default_value(27), "Specify the trigger tower")
+        ("tower,t"      , po::value<unsigned>(&option.tower)->default_value(25), "Specify the trigger tower")
 
         // Superstrip definition
-        ("superstrip,s" , po::value<std::string>(&option.superstrip)->default_value("ss256_nz2"), "Specify the superstrip definition (default: ss256_nz2)")
+        ("superstrip,s" , po::value<std::string>(&option.superstrip)->default_value("sf1_nz8"), "Specify the superstrip definition (default: sf1_nz8)")
 
         // Track fitting algorithm
         ("algo,f"       , po::value<std::string>(&option.algo)->default_value("LTF"), "Select track fitter -- PCA4: PCA fitter 4 params; PCA5: PCA fitter 5 params; ATF4: ATF fitter 4 params; ATF5: ATF fitter 5 params; LTF: Linearized track fitter (default: LTF)")
 
         // MC truth
-        ("minPt"        , po::value<float>(&option.minPt)->default_value(     2.0), "Specify min pt")
+        ("minPt"        , po::value<float>(&option.minPt)->default_value(     3.0), "Specify min pt")
         ("maxPt"        , po::value<float>(&option.maxPt)->default_value(999999.0), "Specify max pt")
         ("minInvPt"     , po::value<float>(&option.minInvPt)->default_value(-999999.0), "Specify min signed 1/pt")
         ("maxInvPt"     , po::value<float>(&option.maxInvPt)->default_value( 999999.0), "Specify max signed 1/pt")
@@ -97,8 +101,8 @@ int main(int argc, char **argv) {
 
         // Only for pattern matching
         ("maxPatterns"  , po::value<long int>(&option.maxPatterns)->default_value(999999999), "Specfiy max number of patterns")
-        ("maxMisses"    , po::value<int>(&option.maxMisses)->default_value(0), "Specify max number of allowed misses")
-        ("maxStubs"     , po::value<int>(&option.maxStubs)->default_value(999999999), "Specfiy max number of stubs per superstrip")
+        ("maxMisses"    , po::value<int>(&option.maxMisses)->default_value(1), "Specify max number of allowed misses (default: 1)")
+        ("maxStubs"     , po::value<int>(&option.maxStubs)->default_value(4), "Specfiy max number of stubs per superstrip (default: 4)")
         ("maxRoads"     , po::value<int>(&option.maxRoads)->default_value(999999999), "Specfiy max number of roads per event")
 
         // Only for matrix building
@@ -106,23 +110,23 @@ int main(int argc, char **argv) {
         ("hitBits"      , po::value<unsigned>(&option.hitBits)->default_value(0), "Specify hit bits (0: all hit, 1: miss layer 1, ..., 6: miss layer 6)")
 
         // Only for track fitting
-        ("maxChi2"      , po::value<float>(&option.maxChi2)->default_value(5.), "Specify maximum reduced chi-squared")
-	("CutPrincipals", po::bool_switch(&option.CutPrincipals)->default_value(false), "replace chi**2 cut with principals cut")
+        ("maxChi2"      , po::value<float>(&option.maxChi2)->default_value(14.6), "Specify maximum reduced chi-squared")  // Marco De Mattia recommends 14.6 as a reasonable cut value
+        ("CutPrincipals", po::bool_switch(&option.CutPrincipals)->default_value(false), "replace chi**2 cut with principals cut")
         ("minNdof"      , po::value<int>(&option.minNdof)->default_value(1), "Specify minimum degree of freedom")
         ("maxCombs"     , po::value<int>(&option.maxCombs)->default_value(999999999), "Specfiy max number of combinations per road")
         ("maxTracks"    , po::value<int>(&option.maxTracks)->default_value(999999999), "Specfiy max number of tracks per event")
 
-	// Only for Duplicate Flag
-        ("rmDuplicate", po::value<int>(&option.rmDuplicate)->default_value(-1), "Duplicate removal option. The argument is the number of max stubs allowed to be shared between AM tracks")
+        // Only for Duplicate Flag
+        ("rmDuplicate", po::value<int>(&option.rmDuplicate)->default_value(2), "Duplicate removal option. The argument is the number of max stubs allowed to be shared between AM tracks")
 
-	// Only for parameter-based duplicate removal
-	("rmParDuplicate", po::bool_switch(&option.rmParDuplicate)->default_value(false), "Parameter-based duplicate removal switch")
+        // Only for parameter-based duplicate removal
+        ("rmParDuplicate", po::bool_switch(&option.rmParDuplicate)->default_value(false), "Parameter-based duplicate removal switch")
 
-	//Only for alternative combination builder configuration
-        ("oldCB", po::bool_switch(&option.oldCB)->default_value(false), "Use the old combination builder")
-	("FiveOfSix", po::bool_switch(&option.FiveOfSix)->default_value(false), "Do all 5/6 permutations of 6/6 roads in addition")
-	("PDDS", po::bool_switch(&option.PDDS)->default_value(false), "Switch on pairwise Delta Delta S combination cleaning")
-	
+        //Only for alternative combination builder configuration
+        ("oldCB", po::bool_switch(&option.oldCB)->default_value(true), "Use the old combination builder")
+        ("FiveOfSix", po::bool_switch(&option.FiveOfSix)->default_value(true), "Do all 5/6 permutations of 6/6 roads in addition")
+        ("PDDS", po::bool_switch(&option.PDDS)->default_value(false), "Switch on pairwise Delta Delta S combination cleaning")
+
         // Only for NTupleMaker
         ("no-trim"      , po::bool_switch(&option.no_trim)->default_value(false), "Do not trim ntuple branches")
         ;
@@ -182,9 +186,11 @@ int main(int argc, char **argv) {
                   vm.count("trackFitting")       +
                   vm.count("bankAnalysis")       +
                   vm.count("matrixTesting")      +
+                  vm.count("patternMerging")     +
+                  vm.count("roadMerging")        +
                   vm.count("write")              ;
     if (vmcount != 1) {
-        std::cerr << "ERROR: Must select exactly one of '-C', '-B', '-R', '-M', '-T', '-A', '-U', or 'W'" << std::endl;
+        std::cerr << "ERROR: Must select exactly one of '-C', '-B', '-R', '-M', '-T', '-A', '-U', '-P', '-Q' or '-W'" << std::endl;
         //std::cout << visible << std::endl;
         return EXIT_FAILURE;
     }
@@ -292,6 +298,28 @@ int main(int argc, char **argv) {
             return exitcode;
         }
         std::cout << "PCA matrix testing " << Color("lgreenb") << "DONE" << EndColor() << "." << std::endl;
+
+    } else if (vm.count("patternMerging")) {
+        std::cout << Color("magenta") << "Start pattern merging..." << EndColor() << std::endl;
+
+        PatternMerging merger(option);
+        int exitcode = merger.run();
+        if (exitcode) {
+            std::cerr << "An error occurred during pattern merging. Exiting." << std::endl;
+            return exitcode;
+        }
+        std::cout << "Pattern merging " << Color("lgreenb") << "DONE" << EndColor() << "." << std::endl;
+
+    } else if (vm.count("roadMerging")) {
+        std::cout << Color("magenta") << "Start road merging..." << EndColor() << std::endl;
+
+        RoadMerging merger(option);
+        int exitcode = merger.run();
+        if (exitcode) {
+            std::cerr << "An error occurred during road merging. Exiting." << std::endl;
+            return exitcode;
+        }
+        std::cout << "Road merging " << Color("lgreenb") << "DONE" << EndColor() << "." << std::endl;
 
     } else if (vm.count("write")) {
         std::cout << Color("magenta") << "Start writing full ntuple..." << EndColor() << std::endl;

@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 # reference: https://github.com/cms-sw/genproductions/blob/master/python/EightTeV/SingleMuMinusFlatPt0p2To100_cff.py
-generator = cms.EDProducer("FlatRandomPtGunProducer",
+generator = cms.EDProducer("FlatRandomPtGunProducer2",
     PGunParameters = cms.PSet(
         MaxPt = cms.double(100.0),
         MinPt = cms.double(1.0),

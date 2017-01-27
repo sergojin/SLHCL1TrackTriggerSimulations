@@ -19,6 +19,7 @@
 #include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/NTupleTTStubs.h"
 #include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/NTupleTTTracks.h"
 #include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/NTupleMaker.h"
+#include "SLHCL1TrackTriggerSimulations/NTupleTools/interface/EDMHacker.h"
 
 DEFINE_FWK_MODULE(NTupleBeamSpot);
 DEFINE_FWK_MODULE(NTupleEventInfo);
@@ -38,4 +39,5 @@ DEFINE_FWK_MODULE(NTupleTTClusters);
 DEFINE_FWK_MODULE(NTupleTTStubs);
 DEFINE_FWK_MODULE(NTupleTTTracks);
 DEFINE_FWK_MODULE(NTupleMaker);
+DEFINE_FWK_MODULE(EDMHacker);
 

@@ -1,6 +1,7 @@
 #ifndef AMSimulation_MatrixBuilder_h_
 #define AMSimulation_MatrixBuilder_h_
 
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitterAlgoPCA.h"
@@ -10,12 +11,11 @@ using namespace slhcl1tt;
 #include "TH1F.h"
 #include "TString.h"
 
-namespace slhcl1tt {
-class TTStubReader;
-}
 
 class MatrixBuilder {
   public:
+    typedef TTStubReaderT<kPatternGenerator> TTStubReader;
+
     // Constructor
     MatrixBuilder(const ProgramOption& po)
     : po_(po),

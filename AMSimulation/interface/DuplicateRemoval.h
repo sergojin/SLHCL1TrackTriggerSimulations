@@ -1,7 +1,7 @@
 #ifndef AMSimulation_DuplicateRemoval_h_
 #define AMSimulation_DuplicateRemoval_h_
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/TTTrack2.h"
 #include <vector>
 #include <algorithm>
 
@@ -16,8 +16,8 @@ class DuplicateRemoval {
     // Destructor
     ~DuplicateRemoval() {}
 
-    // Return flags categorizing as duplicate (1) or not (0)
-    void CheckTracks(std::vector<TTTrack2>& full_am_track_list, int dupRm);
+    // dupRm is a parameter 0..6, if num of shared stubs > dupRm, it is a duplicate
+    void checkTracks(std::vector<TTTrack2>& all_tracks, int dupRm);
 };
 
 }

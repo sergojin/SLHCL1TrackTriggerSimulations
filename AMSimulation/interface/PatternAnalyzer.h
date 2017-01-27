@@ -2,6 +2,9 @@
 #define AMSimulation_PatternAnalyzer_h_
 
 #include "SLHCL1TrackTriggerSimulations/AMSimulationDataFormats/interface/Pattern.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankReader.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/PatternBankWriter.h"
+#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTStubReader.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/Helper.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/ProgramOption.h"
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TriggerTowerMap.h"
@@ -16,6 +19,10 @@ using namespace slhcl1tt;
 
 class PatternAnalyzer {
   public:
+    typedef PatternBankReaderT<kPatternGenerator> PatternBankReader;
+    typedef PatternBankWriterT<kPatternGenerator> PatternBankWriter;
+    typedef TTStubReaderT<kPatternGenerator> TTStubReader;
+
     // Constructor
     PatternAnalyzer(const ProgramOption& po)
     : po_(po),

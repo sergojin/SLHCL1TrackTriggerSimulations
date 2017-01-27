@@ -20,8 +20,8 @@ class AssociativeMemory {
     int init(unsigned npatterns);
 
     // Insert patterns
-    void insert(std::vector<superstrip_type>::const_iterator begin, std::vector<superstrip_type>::const_iterator end, const float invPt);
-    void insert(const pattern_type& patt, const float invPt);
+    void insert(std::vector<superstrip_type>::const_iterator begin, std::vector<superstrip_type>::const_iterator end, const float invPt, const unsigned freq);
+    void insert(const pattern_type& patt, const float invPt, const unsigned freq);
 
     void freeze();
 
@@ -31,7 +31,7 @@ class AssociativeMemory {
     std::vector<unsigned> lookup(const HitBuffer& hitBuffer, const unsigned nLayers, const unsigned maxMisses);
 
     // Retrieve superstripIds and attributes
-    void retrieve(const unsigned patternRef, pattern_type& superstripIds, float& invPt);
+    void retrieve(const unsigned patternRef, pattern_type& superstripIds, float& invPt, unsigned& freq);
 
     // Debug
     void print();
@@ -40,6 +40,7 @@ class AssociativeMemory {
     // Member data
     std::vector<pattern_type> patternBank_;
     std::vector<float>        patternAttributes_invPt_;
+    std::vector<unsigned>     patternAttributes_freq_;
     bool frozen_;
 };
 

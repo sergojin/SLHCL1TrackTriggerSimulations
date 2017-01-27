@@ -1,9 +1,5 @@
 #include "SLHCL1TrackTriggerSimulations/AMSimulation/interface/TrackFitter.h"
 
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTRoadReader.h"
-#include "SLHCL1TrackTriggerSimulations/AMSimulationIO/interface/TTTrackReader.h"
-
-
 namespace {
 unsigned getPtSegment(float invPt) {  // for PCA
     return (invPt - PCA_MIN_INVPT) / (PCA_MAX_INVPT - PCA_MIN_INVPT) * PCA_NSEGMENTS;
@@ -38,18 +34,21 @@ bool PrincipalCuts(std::vector<float> princes){
   bool pass=true;
   const float Cuts6[12]={58.,33.,22.,12.,-1.,-1.,9.,3.,3.,3.,-1.,-1.};
   const float Cuts5[10]={33.,22.,12.,-1.,-1.,3.,3.,3.,-1.,-1.};
-  if(princes.size()==12) for(unsigned i=0; i<princes.size(); ++i){
-    if(Cuts6[i]==-1) continue;
-    if(fabs(princes[i])>Cuts6[i]){
-      pass=false;
-      break;
+  if(princes.size()==12) {
+    for(unsigned i=0; i<princes.size(); ++i){
+      if(Cuts6[i]==-1) continue;
+      if(fabs(princes[i])>Cuts6[i]){
+        pass=false;
+        break;
+      }
     }
-  }
-  else for(unsigned i=0; i<princes.size(); ++i){
-    if(Cuts5[i]==-1) continue;
-    if(fabs(princes[i])>Cuts5[i]){
-      pass=false;
-      break;
+  } else {
+    for(unsigned i=0; i<princes.size(); ++i){
+      if(Cuts5[i]==-1) continue;
+      if(fabs(princes[i])>Cuts5[i]){
+        pass=false;
+        break;
+      }
     }
   }
   return pass;
@@ -65,19 +64,12 @@ int TrackFitter::makeTracks(TString src, TString out) {
     // _________________________________________________________________________
     // For reading
     TTRoadReader reader(verbose_);
-
-    if (reader.init(src, prefixRoad_, suffix_)) {
-        std::cout << Error() << "Failed to initialize TTRoadReader." << std::endl;
-        return 1;
-    }
+    reader.init(src);
 
     // _________________________________________________________________________
     // For writing
     TTTrackWriter writer(verbose_);
-    if (writer.init(reader.getChain(), out, prefixTrack_, suffix_)) {
-        std::cout << Error() << "Failed to initialize TTTrackWriter." << std::endl;
-        return 1;
-    }
+    writer.init(reader.getChain(), out);
 
     // _________________________________________________________________________
     // Loop over all events
@@ -98,7 +90,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
         if (verbose_>2)  std::cout << Debug() << "... evt: " << ievt << " # roads: " << nroads << std::endl;
 
         if (!nroads) {  // skip if no road
-            writer.fill(std::vector<TTTrack2>());
+            writer.fillTracks(std::vector<TTTrack2>());
             ++nRead;
             continue;
         }
@@ -119,26 +111,26 @@ int TrackFitter::makeTracks(TString src, TString out) {
 
             // Get combinations of stubRefs
             std::vector<std::vector<unsigned> > stubRefs = reader.vr_stubRefs->at(iroad);
-	    std::vector<std::vector<float> > stubDeltaS; //pass DeltaS information for each stub to the PDDS
+            std::vector<std::vector<float> > stubDeltaS(stubRefs.size(), std::vector<float>());
             for (unsigned ilayer=0; ilayer<stubRefs.size(); ++ilayer) {
-	        std::vector<float> placeholderTemp;
-	        stubDeltaS.push_back(placeholderTemp);
-		if(po_.PDDS) for(unsigned istub=0; istub<stubRefs[ilayer].size(); ++istub) stubDeltaS[ilayer].push_back(reader.vb_trigBend->at(stubRefs[ilayer][istub]));
-		else for(unsigned istub=0; istub<stubRefs[ilayer].size(); ++istub) stubDeltaS[ilayer].push_back(0.); //default DDS is 0 to disable PDDS cleaning
-                if (stubRefs.at(ilayer).size() > (unsigned) po_.maxStubs){
-                    stubRefs.at(ilayer).resize(po_.maxStubs);
-		    stubDeltaS.at(ilayer).resize(po_.maxStubs);
-		}
+                for(unsigned istub=0; istub<stubRefs.at(ilayer).size(); ++istub) {
+                    const unsigned stubRef = stubRefs.at(ilayer).at(istub);
+                    stubDeltaS.at(ilayer).push_back(reader.vb_trigBend->at(stubRef));
+                }
             }
-	    
-	    //choose either the normal combination building or the 5/6 permutations per 6/6 road in addition and/or pairwise Delta Delta S cleaning (PDDS)
-	    std::vector<std::vector<unsigned> > combinations;
-	    if (po_.oldCB) combinations = combinationFactory_.combine(stubRefs);
-            else if(po_.PDDS) combinations = pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix);
-	    else combinations = combinationBuilderFactory_->combine(stubRefs);
 
-	    // std::cout << "combinations = " << combinations.size() << std::endl;
+            // Choose either the normal combination building or the 5/6 permutations per 6/6 road in addition
+            // and/or pairwise Delta Delta S cleaning (PDDS)
+            // Quote from Marco: The compiler will likely do RVO so the move might not be needed, we prefer to be explicit about it.
+            std::vector<std::vector<unsigned> > combinations;
+            if (po_.oldCB)
+                combinations = std::move(combinationFactory_.combine(stubRefs, po_.FiveOfSix));
+            else if (po_.PDDS)
+                combinations = std::move(pairCombinationFactory_.combine(stubRefs, stubDeltaS, po_.FiveOfSix));
+            else
+                combinations = std::move(combinationBuilderFactory_->combine(stubRefs));
 
+            assert(combinations.size() > 0);
             for (unsigned icomb=0; icomb<combinations.size(); ++icomb)
                 assert(combinations.at(icomb).size() == reader.vr_stubRefs->at(iroad).size());
 
@@ -198,11 +190,13 @@ int TrackFitter::makeTracks(TString src, TString out) {
                 atrack.setHitBits   (acomb.hitBits);
                 atrack.setStubRefs  (acomb.stubRefs);
 
-                if(!po_.CutPrincipals){
-		  if (atrack.chi2Red() < po_.maxChi2)  // reduced chi^2 = chi^2 / ndof
-                    tracks.push_back(atrack);
-		}
-		else if(PrincipalCuts(atrack.principals())) tracks.push_back(atrack);
+                if (!po_.CutPrincipals) {
+                    if (atrack.chi2Red() < po_.maxChi2)  // reduced chi^2 = chi^2 / ndof
+                        tracks.push_back(atrack);
+                } else {
+                    if (PrincipalCuts(atrack.principals()))
+                        tracks.push_back(atrack);
+                }
 
                 if (verbose_>2)  std::cout << Debug() << "... ... ... track: " << icomb << " status: " << fitstatus << " reduced chi2: " << atrack.chi2Red() << " invPt: " << atrack.invPt() << " phi0: " << atrack.phi0() << " cottheta: " << atrack.cottheta() << " z0: " << atrack.z0() << std::endl;
             }
@@ -218,20 +212,6 @@ int TrackFitter::makeTracks(TString src, TString out) {
             }
         }
 
-        // _____________________________________________________________________
-        // Find ghosts
-
-        for (unsigned itrack=0; itrack<tracks.size(); ++itrack) {  // all tracks
-            for (unsigned jtrack=0; jtrack<itrack; ++jtrack) {  // only non ghost tracks
-                if (tracks.at(jtrack).isGhost())  continue;
-
-                bool isGhost = ghostBuster_.isGhostTrack(tracks.at(jtrack).stubRefs(), tracks.at(itrack).stubRefs());
-                if (isGhost) {
-                    tracks.at(itrack).setAsGhost();
-                }
-            }
-        }
-
         if (! tracks.empty())
             ++nKept;
 
@@ -239,26 +219,23 @@ int TrackFitter::makeTracks(TString src, TString out) {
             tracks.resize(po_.maxTracks);
 
 
+        // ---------------------------------------------------------------------
+        // Classify tracks as duplicates or not (for duplicate removal)
+        // In the algorithm, AM tracks are sorted by chi2 (used to be matching logic and pT)
+        // ---------------------------------------------------------------------
+        DuplicateRemoval flagDuplicates;
+        if (po_.rmDuplicate != -1) flagDuplicates.checkTracks(tracks, po_.rmDuplicate);
 
-	// ---------------------------------------------------------------------
-	// Classify tracks as duplicates or not (for duplicate removal)
-	// In the algorithm tracking particles are sorted by pT
-	// And AM tracks are sorted by logic and pT
-	// ---------------------------------------------------------------------
-	DuplicateRemoval flagDuplicates;
-	flagDuplicates.CheckTracks(tracks, po_.rmDuplicate);
-
-	//----------------------------------------------------------------------
-	// Identify and flag duplicates by defining a track-parameter space 
-	// inside of which anything is considered to be a single track
-	//----------------------------------------------------------------------
-	ParameterDuplicateRemoval RemoveParameterDuplicates;
-	if(po_.rmParDuplicate) RemoveParameterDuplicates.ReduceTracks(tracks);
+        //----------------------------------------------------------------------
+        // Identify and flag duplicates by defining a track-parameter space
+        // inside of which anything is considered to be a single track
+        //----------------------------------------------------------------------
+        ParameterDuplicateRemoval removeParameterDuplicates;
+        if (po_.rmParDuplicate) removeParameterDuplicates.ReduceTracks(tracks);
 
 
-
-
-        // _____________________________________________________________________        // Track categorization
+        // _____________________________________________________________________
+        // Track categorization
 
         if (po_.speedup<1) {
             const unsigned nparts = reader.vp2_primary->size();
@@ -267,10 +244,11 @@ int TrackFitter::makeTracks(TString src, TString out) {
             std::vector<TrackingParticle> trkParts;
             for (unsigned ipart=0; ipart<nparts; ++ipart) {
                 bool  primary         = reader.vp2_primary->at(ipart);
+                bool  intime          = reader.vp2_intime->at(ipart);
                 int   simCharge       = reader.vp2_charge->at(ipart);
+                float simPt           = reader.vp2_pt->at(ipart);
 
-                if (simCharge!=0 && primary) {
-                    float simPt           = reader.vp2_pt->at(ipart);
+                if (simCharge!=0 && primary && intime && simPt>=1) {
                     float simEta          = reader.vp2_eta->at(ipart);
                     float simPhi          = reader.vp2_phi->at(ipart);
                     //float simVx           = reader.vp2_vx->at(ipart);
@@ -298,7 +276,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
             truthAssociator_.associate(trkParts, tracks);
         }
 
-        writer.fill(tracks);
+        writer.fillTracks(tracks);
         ++nRead;
     }
 
@@ -318,8 +296,7 @@ int TrackFitter::makeTracks(TString src, TString out) {
         if (it->second)  it->second->SetDirectory(gDirectory);
     }
 
-    long long nentries = writer.writeTree();
-    assert(nentries == nRead);
+    writer.write();
 
     return 0;
 }

@@ -1,34 +1,32 @@
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process("TEST")
+process = cms.Process('NTUPLE')
 runOnMC = True
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
+options.setDefault('inputFiles', ['file:rawsim_numEvent100.root'])
+options.setDefault('outputFile', 'ntuple.root')
 options.parseArguments()
-# Modify the defaults
-if not options.inputFiles:
-    options.inputFiles = ['file:rawsim_numEvent100.root']
-if options.outputFile == "output.root":
-    options.outputFile = "test_ntuple.root"
 
 
 ## MessageLogger
-process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.load('FWCore.MessageService.MessageLogger_cfi')
 
-## Options and Output Report
+## Options
 process.options = cms.untracked.PSet(
-    #wantSummary = cms.untracked.bool( True ),
-    #SkipEvent = cms.untracked.vstring('ProductNotFound')
+
 )
 
-## Source
+## Input Source
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(options.inputFiles)
 )
+
 ## Maximal Number of Events
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxEvents) )
+process.maxEvents = cms.untracked.PSet(
+    input = cms.untracked.int32(options.maxEvents)
+)
 
 ## Geometry and Global Tags
 process.load('Configuration.Geometry.GeometryExtended2023TTIReco_cff')
@@ -40,12 +38,18 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:upgradePLS3', '')
 
 process.load('Geometry.TrackerGeometryBuilder.StackedTrackerGeometry_cfi')
 
-## Write the TTree
+## Make the ntuple
 process.TFileService = cms.Service("TFileService",
     fileName = cms.string(options.outputFile)
 )
-
 process.load("SLHCL1TrackTriggerSimulations.NTupleTools.sequences_cff")
 
+## Paths and schedule
 process.p = cms.Path(process.ntupleSequence_TTI)
+process.schedule = cms.Schedule(process.p)
+
+
+# Configure framework report and summary
+process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 

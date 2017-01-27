@@ -10,27 +10,41 @@ namespace slhcl1tt {
 // A thinner version of TTTrack
 class TTTrack2 {
   public:
-    // Constructors
+    // Constructor
     TTTrack2()
     : rinv_(-999999.), phi0_(-999999.), cottheta_(-999999.), z0_(-999999.), d0_(-999999.),
-      chi2_(-999999.), ndof_(-1), chi2_phi_(-999999.), chi2_z_(-999999.), 
-      matchChi2_(-1),
-      isGhost_(false), tpId_(-1), synTpId_(-2), tower_(99), hitBits_(0), ptSegment_(0), roadRef_(0), combRef_(0), patternRef_(0),
+      chi2_(-999999.), ndof_(-1), synMatchChi2_(-999999.), synMatchCat_(-2),
+      tpId_(-1), synTpId_(-1), tower_(99), hitBits_(0), ptSegment_(0),
+      roadRef_(0), combRef_(0), patternRef_(0),
       stubRefs_(), principals_() {}
 
+    // Copy constructor
     TTTrack2(const TTTrack2& rhs)
     : rinv_(rhs.rinv_), phi0_(rhs.phi0_), cottheta_(rhs.cottheta_), z0_(rhs.z0_), d0_(rhs.d0_),
-      chi2_(rhs.chi2_), ndof_(rhs.ndof_), chi2_phi_(rhs.chi2_phi_), chi2_z_(rhs.chi2_z_), 
-      matchChi2_(rhs.matchChi2_),
-      isGhost_(rhs.isGhost_), tpId_(rhs.tpId_), synTpId_(rhs.synTpId_), tower_(rhs.tower_), hitBits_(rhs.hitBits_), ptSegment_(rhs.ptSegment_), roadRef_(rhs.roadRef_), combRef_(rhs.combRef_), patternRef_(rhs.patternRef_),
+      chi2_(rhs.chi2_), ndof_(rhs.ndof_), synMatchChi2_(rhs.synMatchChi2_), synMatchCat_(rhs.synMatchCat_),
+      tpId_(rhs.tpId_), synTpId_(rhs.synTpId_), tower_(rhs.tower_), hitBits_(rhs.hitBits_), ptSegment_(rhs.ptSegment_),
+      roadRef_(rhs.roadRef_), combRef_(rhs.combRef_), patternRef_(rhs.patternRef_),
       stubRefs_(rhs.stubRefs_), principals_(rhs.principals_) {}
 
     // Destructor
     ~TTTrack2() {}
 
+    // Copy assignment
+    TTTrack2& operator=(const TTTrack2& rhs) {
+        // check for self-assignment
+        if (&rhs == this)
+            return *this;
+
+        rinv_=(rhs.rinv_); phi0_=(rhs.phi0_); cottheta_=(rhs.cottheta_); z0_=(rhs.z0_); d0_=(rhs.d0_);
+        chi2_=(rhs.chi2_); ndof_=(rhs.ndof_); synMatchChi2_=(rhs.synMatchChi2_); synMatchCat_=(rhs.synMatchCat_);
+        tpId_=(rhs.tpId_); synTpId_=(rhs.synTpId_); tower_=(rhs.tower_); hitBits_=(rhs.hitBits_); ptSegment_=(rhs.ptSegment_);
+        roadRef_=(rhs.roadRef_); combRef_=(rhs.combRef_); patternRef_=(rhs.patternRef_);
+        stubRefs_=(rhs.stubRefs_); principals_=(rhs.principals_);
+        return *this;
+    }
+
     // Setters
-    void setTrackParams(float rinv, float phi0, float cottheta, float z0, float d0,
-                        float chi2, int ndof, float chi2_phi, float chi2_z) {
+    void setTrackParams(float rinv, float phi0, float cottheta, float z0, float d0, float chi2, int ndof) {
         rinv_     = rinv;
         phi0_     = phi0;
         cottheta_ = cottheta;
@@ -38,12 +52,10 @@ class TTTrack2 {
         d0_       = d0;
         chi2_     = chi2;
         ndof_     = ndof;
-        chi2_phi_ = chi2_phi;
-        chi2_z_   = chi2_z;
     }
 
-    void setMatchChi2(float matchChi2)	    		    { matchChi2_ = matchChi2; }
-    void setAsGhost()                                       { isGhost_ = true; }
+    void setSynMatchChi2(float synMatchChi2)                { synMatchChi2_ = synMatchChi2; }
+    void setSynMatchCat(int synMatchCat)                    { synMatchCat_ = synMatchCat; }
     void setTpId(int tpId)                                  { tpId_ = tpId; }
     void setSynTpId(int synTpId)                            { synTpId_ = synTpId; }
     void setTower(unsigned tower)                           { tower_ = tower; }
@@ -76,13 +88,9 @@ class TTTrack2 {
 
     float chi2Red()                             const { return chi2() / ndof(); }
 
-    float chi2_phi()                            const { return chi2_phi_; }
+    float synMatchChi2()                        const { return synMatchChi2_; }
 
-    float chi2_z()                              const { return chi2_z_; }
-
-    float matchChi2()				const { return matchChi2_; }
-
-    bool  isGhost()                             const { return isGhost_; }
+    int   synMatchCat()                         const { return synMatchCat_; }
 
     int   tpId()                                const { return tpId_; }
 
@@ -127,10 +135,8 @@ class TTTrack2 {
     float d0_;
     float chi2_;
     int   ndof_;
-    float chi2_phi_;
-    float chi2_z_;
-    float matchChi2_;
-    bool  isGhost_;
+    float synMatchChi2_;
+    int   synMatchCat_;
     int   tpId_;
     int   synTpId_;
     unsigned tower_;
